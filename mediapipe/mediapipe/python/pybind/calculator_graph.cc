@@ -14,20 +14,14 @@
 
 #include "mediapipe/python/pybind/calculator_graph.h"
 
-#include <map>
-#include <string>
-
-#include "absl/base/const_init.h"
 #include "absl/memory/memory.h"
-#include "absl/status/status.h"
 #include "absl/strings/str_cat.h"
-#include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/calculator.pb.h"
-#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/calculator_graph.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/port/map_util.h"
 #include "mediapipe/framework/port/parse_text_proto.h"
+#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/tool/calculator_graph_template.pb.h"
 #include "mediapipe/python/pybind/util.h"
 #include "pybind11/embed.h"
@@ -39,15 +33,15 @@ namespace python {
 
 // A mutex to guard the output stream observer python callback function.
 // Only one python callback can run at once.
-absl::Mutex callback_mutex(absl::kConstInit);
+absl::Mutex callback_mutex;
 
 template <typename T>
 T ParseProto(const py::object& proto_object) {
   T proto;
-  if (!ParseTextProto<T>(py::str(proto_object), &proto)) {
+  if (!ParseTextProto<T>(proto_object.str(), &proto)) {
     throw RaisePyError(
         PyExc_RuntimeError,
-        absl::StrCat("Failed to parse: ", std::string(py::str(proto_object)))
+        absl::StrCat("Failed to parse: ", std::string(proto_object.str()))
             .c_str());
   }
   return proto;
@@ -88,7 +82,7 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
           const std::string& key = kw.first.cast<std::string>();
           if (key == "binary_graph_path") {
             init_with_binary_graph = true;
-            std::string file_name(py::str(kw.second.cast<py::object>()));
+            std::string file_name(kw.second.cast<py::object>().str());
             graph_config_proto = ReadCalculatorGraphConfigFromFile(file_name);
           } else if (key == "graph_config") {
             init_with_graph_proto = true;
@@ -157,30 +151,6 @@ void CalculatorGraphSubmodule(pybind11::module* module) {
       [](CalculatorGraph* self, CalculatorGraph::GraphInputStreamAddMode mode) {
         self->SetGraphInputStreamAddMode(mode);
       });
-
-  calculator_graph.def(
-      "disallow_service_default_initialization",
-      [](CalculatorGraph* self) {
-        RaisePyErrorIfNotOk(self->DisallowServiceDefaultInitialization());
-      },
-      R"doc(Disallows/disables default initialization of MediaPipe graph services.
-
-  MediaPipe graph serices, essentially a graph-level singletons, are designed in
-  the way, so they may provide default initialization. For example, this allows
-  to run OpenGL processing wihtin the graph without provinging a praticular
-  OpenGL context as it can be provided by default-initializable kGpuService.
-
-  So, even if calculators require some service optionally, it will be still
-  initialized if it is default-initializable. In some cases, this may be
-  unwanted and strict control of what services are allowed in the graph can be
-  achieved by calling this method.
-
-  RECOMMENDATION: do not use unless you have to (for example, default
-    initialization has side effects)
-
-  NOTE: must be called before `start_run`, where services are checked and can be
-    default-initialized.
-  )doc");
 
   calculator_graph.def(
       "add_packet_to_input_stream",

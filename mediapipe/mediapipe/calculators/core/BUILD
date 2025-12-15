@@ -248,8 +248,6 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/memory",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
@@ -464,18 +462,6 @@ cc_library(
     alwayslink = 1,
 )
 
-cc_test(
-    name = "counting_source_calculator_test",
-    srcs = ["counting_source_calculator_test.cc"],
-    deps = [
-        ":counting_source_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
-        "@com_google_absl//absl/status",
-    ],
-)
-
 cc_library(
     name = "make_pair_calculator",
     srcs = ["make_pair_calculator.cc"],
@@ -512,7 +498,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -525,7 +511,7 @@ cc_library(
         "//mediapipe/framework/api2:node",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/port:status",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -692,20 +678,14 @@ cc_library(
     alwayslink = 1,
 )
 
-mediapipe_proto_library(
-    name = "immediate_mux_calculator_proto",
-    srcs = ["immediate_mux_calculator.proto"],
-)
-
 cc_library(
     name = "immediate_mux_calculator",
     srcs = ["immediate_mux_calculator.cc"],
     deps = [
-        ":immediate_mux_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
 )
@@ -787,20 +767,9 @@ cc_library(
     deps = [
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:ret_check",
-        "@com_google_absl//absl/status",
+        "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
-)
-
-cc_test(
-    name = "default_side_packet_calculator_test",
-    srcs = ["default_side_packet_calculator_test.cc"],
-    deps = [
-        ":default_side_packet_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
-    ],
 )
 
 cc_library(
@@ -841,17 +810,16 @@ cc_test(
         ":round_robin_demux_calculator",
         "//mediapipe/framework:calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework:executor",
         "//mediapipe/framework:test_calculators",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:threadpool",
         "//mediapipe/framework/stream_handler:immediate_input_stream_handler",
         "//mediapipe/framework/tool:sink",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/synchronization",
-        "@com_google_protobuf//:protobuf",
     ],
 )
 
@@ -928,7 +896,7 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/tool:validate_type",
         "@com_google_absl//absl/log:absl_check",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -944,7 +912,7 @@ cc_test(
         "//mediapipe/framework/port:logging",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -990,7 +958,6 @@ cc_library(
         "//mediapipe/framework/formats:classification_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:image",
-        "//mediapipe/framework/formats:image_frame",
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/framework/formats:rect_cc_proto",
@@ -1017,11 +984,11 @@ cc_test(
         ":split_vector_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework:calculator_runner",
-        "//mediapipe/framework/formats:image_frame",
+        "//mediapipe/framework/deps:file_path",
         "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:integral_types",
         "//mediapipe/framework/port:parse_text_proto",
         "//mediapipe/framework/tool:validate_type",
-        "@com_google_absl//absl/memory",
         "@org_tensorflow//tensorflow/lite:framework",
         "@org_tensorflow//tensorflow/lite/kernels:builtin_ops",
     ],
@@ -1173,7 +1140,7 @@ cc_library(
         "//mediapipe/framework/tool:status_util",
         "//mediapipe/util:time_series_util",
         "@com_google_absl//absl/memory",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )
@@ -1348,6 +1315,7 @@ cc_test(
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
         "@com_google_absl//absl/strings:str_format",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -1388,18 +1356,6 @@ cc_library(
         "//mediapipe/framework/port:status",
     ],
     alwayslink = 1,
-)
-
-cc_test(
-    name = "vector_size_calculator_test",
-    srcs = ["vector_size_calculator_test.cc"],
-    deps = [
-        ":vector_size_calculator",
-        "//mediapipe/framework:calculator_framework",
-        "//mediapipe/framework/api2:node",
-        "//mediapipe/framework/port:gtest_main",
-        "//mediapipe/framework/port:parse_text_proto",
-    ],
 )
 
 cc_library(

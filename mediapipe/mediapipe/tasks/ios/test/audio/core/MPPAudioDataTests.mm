@@ -27,7 +27,7 @@ static MPPFileInfo *const kSpeech16KHzMonoFileInfo =
 
 static AVAudioFormat *const kAudioEngineFormat =
     [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32
-                                     sampleRate:48000.0f
+                                     sampleRate:48000
                                        channels:1
                                     interleaved:YES];
 
@@ -41,9 +41,7 @@ static NSString *const kExpectedErrorDomain = @"com.google.mediapipe.tasks";
 
 #define AssertAudioDataIsValid(audioData, channelCount, sampleRate, sampleCount) \
   XCTAssertNotNil(audioData);                                                    \
-  XCTAssertEqual(audioData.format.channelCount, channelCount);                   \
-  XCTAssertEqual(audioData.format.sampleRate, sampleRate);                       \
-  XCTAssertEqual(audioData.bufferLength, sampleCount);
+  XCTAssertEqual(audioData.bufferLength, channelCount *sampleCount);
 
 #define AssertEqualFloatBuffers(buffer, expectedBuffer)     \
   XCTAssertNotNil(buffer);                                  \
@@ -70,36 +68,6 @@ NS_ASSUME_NONNULL_BEGIN
                                       error:(NSError **)error;
 
 - (BOOL)loadAudioPCMBuffer:(AVAudioPCMBuffer *)pcmBuffer error:(NSError **)error;
-
-- (nullable MPPFloatBuffer *)internalReadAtOffset:(NSUInteger)offset
-                                       withLength:(NSUInteger)length
-                                            error:(NSError **)error;
-@end
-
-@interface MPPAudioData ()
-- (BOOL)loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:(NSError **)error;
-- (BOOL)isValidAudioRecordFormat:(MPPAudioDataFormat *)format error:(NSError **)error;
-@end
-
-@interface MPPAudioData (Tests)
-- (BOOL)mockLoadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error;
-@end
-
-@implementation MPPAudioData (Tests)
-// Mocks the logic of `loadAudioRecord` for tests to avoid audio engine running state checks.
-- (BOOL)mockLoadAudioRecord:(MPPAudioRecord *)audioRecord error:(NSError **)error {
-  if (![self isValidAudioRecordFormat:audioRecord.audioDataFormat error:error]) {
-    return NO;
-  }
-
-  // Invoking `internalReadAtOffset` instead of `readAtOffset` to avoid audio engine running state
-  // checks.
-  MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
-                                                             withLength:audioRecord.bufferLength
-                                                                  error:error];
-
-  return [self loadRingBufferWithAudioRecordBuffer:audioRecordBuffer error:error];
-}
 @end
 
 @interface MPPAudioDataTests : XCTestCase
@@ -109,7 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testInitWithFormatAndSampleCountSucceeds {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 1200;
 
   [MPPAudioDataTests asssertCreateAudioDataWithChannelCount:monoChannelCount
@@ -125,7 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithFloatBufferSucceeds {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -165,7 +133,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithFloatBufferAndOffsetSucceeds {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -187,7 +155,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithLengthOutOfBoundsFails {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -210,7 +178,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadWithOffsetOutOfBoundsFails {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 7;
 
   MPPAudioData *audioData =
@@ -233,7 +201,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadFromShorterAudioRecordSucceeds {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 1000;
 
   const NSInteger bufferLength = 400;
@@ -261,7 +229,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)testLoadFromLongerAudioRecordSucceeds {
   const NSInteger monoChannelCount = 1;
-  const double sampleRate = 16000.0f;
+  const NSInteger sampleRate = 16000;
   const NSInteger sampleCount = 400;
 
   const NSInteger bufferLength = 1000;
@@ -422,11 +390,11 @@ NS_ASSUME_NONNULL_BEGIN
                      fromAudioRecord:(MPPAudioRecord *)audioRecord {
   MPPFloatBuffer *previousStateOfAudioData = audioData.buffer;
 
-  XCTAssertTrue([audioData mockLoadAudioRecord:audioRecord error:nil]);
+  XCTAssertTrue([audioData loadAudioRecord:audioRecord error:nil]);
 
-  MPPFloatBuffer *audioRecordBuffer = [audioRecord internalReadAtOffset:0
-                                                             withLength:audioRecord.bufferLength
-                                                                  error:nil];
+  MPPFloatBuffer *audioRecordBuffer = [audioRecord readAtOffset:0
+                                                     withLength:audioRecord.bufferLength
+                                                          error:nil];
 
   [MPPAudioDataTests assertDataOfFloatBuffer:audioData.buffer
       containsInOrderSamplesFromPreviousStateOfFloatBuffer:previousStateOfAudioData
@@ -460,7 +428,7 @@ NS_ASSUME_NONNULL_BEGIN
                                FLT_EPSILON);
   }
 
-  // Starting indices for comparison of the second chunks in float buffer and
+  // Starting indices for comparison of the second chunks in float bufer and
   // `newlyLoadedFloatBuffer` are calculated.
   const NSInteger startIndexForComparisonInFloatBuffer = firstChunkLength;
   const NSInteger startIndexForComparisonInNewlyLoadedBuffer =

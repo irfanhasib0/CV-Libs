@@ -2,15 +2,12 @@
 
 #include <cstdint>
 #include <cstring>
-#include <utility>
+#include <string>
 #include <vector>
 
-#include "mediapipe/framework/port.h"  // IWYU pragma: keep
 #include "mediapipe/framework/port/gmock.h"
-#include "mediapipe/framework/port/gtest.h"
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gl_calculator_helper.h"
-#include "mediapipe/gpu/gl_context.h"  // IWYU pragma: keep
 #include "mediapipe/gpu/gpu_buffer_format.h"
 #endif
 

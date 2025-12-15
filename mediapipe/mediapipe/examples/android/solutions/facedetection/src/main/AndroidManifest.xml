@@ -4,7 +4,7 @@
 
   <uses-sdk
       android:minSdkVersion="21"
-      android:targetSdkVersion="34" />
+      android:targetSdkVersion="30" />
 
   <!-- For loading images from gallery -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -23,8 +23,7 @@
       android:supportsRtl="true"
       android:theme="@style/AppTheme">
     <activity android:name=".MainActivity"
-              android:screenOrientation="portrait"
-              android:exported="true">
+              android:screenOrientation="portrait">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
 

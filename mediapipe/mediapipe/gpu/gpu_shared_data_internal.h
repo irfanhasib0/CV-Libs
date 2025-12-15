@@ -21,19 +21,15 @@
 #ifndef MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 #define MEDIAPIPE_GPU_GPU_SHARED_DATA_INTERNAL_H_
 
-#include <map>
 #include <memory>
-#include <string>
-#include <utility>
 
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "mediapipe/framework/calculator_context.h"
 #include "mediapipe/framework/calculator_node.h"
 #include "mediapipe/framework/executor.h"
+#include "mediapipe/framework/port/ret_check.h"
+#include "mediapipe/gpu/gl_base.h"
 #include "mediapipe/gpu/gl_context.h"
 #include "mediapipe/gpu/gpu_buffer_multi_pool.h"
-#include "mediapipe/gpu/multi_pool.h"
 
 #ifdef __APPLE__
 #include "mediapipe/gpu/cv_texture_cache_manager.h"
@@ -41,9 +37,9 @@
 
 namespace mediapipe {
 
-#if MEDIAPIPE_METAL_ENABLED
+#ifdef __APPLE__
 class MetalSharedResources;
-#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // defined(__APPLE__)
 
 // TODO: rename to GpuService or GpuManager or something.
 class GpuResources {
@@ -51,17 +47,7 @@ class GpuResources {
   using StatusOrGpuResources = absl::StatusOr<std::shared_ptr<GpuResources>>;
 
   static StatusOrGpuResources Create();
-  // Optional gpu_buffer_pool_options argument allows to configure the
-  // GpuBufferMultiPool instance.
-  static StatusOrGpuResources Create(
-      PlatformGlContext external_context,
-      const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
-
-  // Creates a GpuResources instance that is shared with the GL context provided
-  // by the gpu_resources argument.
-  static StatusOrGpuResources Create(
-      const GpuResources& gpu_resources,
-      const MultiPoolOptions* gpu_buffer_pool_options = nullptr);
+  static StatusOrGpuResources Create(PlatformGlContext external_context);
 
   // The destructor must be defined in the implementation file so that on iOS
   // the correct ARC release calls are generated.
@@ -71,22 +57,18 @@ class GpuResources {
 
   // Shared GL context for calculators.
   // TODO: require passing a context or node identifier.
-  const std::shared_ptr<GlContext>& gl_context() const {
-    return gl_context(nullptr);
-  }
+  const std::shared_ptr<GlContext>& gl_context() { return gl_context(nullptr); }
 
-  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc) const;
+  const std::shared_ptr<GlContext>& gl_context(CalculatorContext* cc);
 
   // Shared buffer pool.
   GpuBufferMultiPool& gpu_buffer_pool() { return gpu_buffer_pool_; }
 
-#if MEDIAPIPE_METAL_ENABLED
+#ifdef __APPLE__
   MetalSharedResources& metal_shared() { return *metal_shared_; }
-#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // defined(__APPLE__)§
 
   absl::Status PrepareGpuNode(CalculatorNode* node);
-
-  absl::StatusOr<std::shared_ptr<Executor>> GetDefaultGpuExecutor() const;
 
   // If the node requires custom GPU executors in the current configuration,
   // returns the executor's names and the executors themselves.
@@ -96,8 +78,7 @@ class GpuResources {
 
  private:
   GpuResources() = delete;
-  explicit GpuResources(std::shared_ptr<GlContext> gl_context,
-                        const MultiPoolOptions* gpu_buffer_pool_options);
+  explicit GpuResources(std::shared_ptr<GlContext> gl_context);
 
   GlContext::StatusOrGlContext GetOrCreateGlContext(const std::string& key);
   const std::string& ContextKey(const std::string& canonical_node_name);
@@ -116,9 +97,9 @@ class GpuResources {
   // ios_gpu_data, so the declaration order is important.
   GpuBufferMultiPool gpu_buffer_pool_;
 
-#if MEDIAPIPE_METAL_ENABLED
+#ifdef __APPLE__
   std::unique_ptr<MetalSharedResources> metal_shared_;
-#endif  // MEDIAPIPE_METAL_ENABLED
+#endif  // defined(__APPLE__)
 
   std::map<std::string, std::shared_ptr<Executor>> named_executors_;
 };

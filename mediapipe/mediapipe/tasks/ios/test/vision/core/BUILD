@@ -29,7 +29,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPImageTests.m"],
     data = [
         "//mediapipe/tasks/testdata/vision:test_images",
@@ -42,7 +42,6 @@ objc_library(
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
         "//third_party/apple_frameworks:UIKit",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -58,12 +57,9 @@ ios_unit_test(
 
 objc_library(
     name = "MPPMaskObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPMaskTests.m"],
-    deps = [
-        "//mediapipe/tasks/ios/vision/core:MPPMask",
-        "//third_party/apple_frameworks:XCTest",
-    ],
+    deps = ["//mediapipe/tasks/ios/vision/core:MPPMask"],
 )
 
 ios_unit_test(

@@ -18,7 +18,7 @@ static const NSInteger kDefaultChannelCount = 1;
 
 @implementation MPPAudioDataFormat
 
-- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(double)sampleRate {
+- (instancetype)initWithChannelCount:(NSUInteger)channelCount sampleRate:(NSUInteger)sampleRate {
   self = [super init];
   if (self) {
     _channelCount = channelCount;
@@ -27,7 +27,7 @@ static const NSInteger kDefaultChannelCount = 1;
   return self;
 }
 
-- (instancetype)initWithSampleRate:(double)sampleRate {
+- (instancetype)initWithSampleRate:(NSUInteger)sampleRate {
   return [self initWithChannelCount:kDefaultChannelCount sampleRate:sampleRate];
 }
 

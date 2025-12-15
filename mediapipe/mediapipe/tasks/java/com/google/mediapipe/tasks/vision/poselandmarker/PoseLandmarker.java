@@ -410,7 +410,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
       /** Sets the minimum confidence score for the pose tracking to be considered successful. */
       public abstract Builder setMinTrackingConfidence(Float value);
 
-      public abstract Builder setOutputSegmentationMasks(boolean value);
+      public abstract Builder setOutputSegmentationMasks(Boolean value);
 
       /**
        * Sets the result listener to receive the detection results asynchronously when the pose
@@ -460,7 +460,7 @@ public final class PoseLandmarker extends BaseVisionTaskApi {
 
     abstract Optional<Float> minTrackingConfidence();
 
-    abstract boolean outputSegmentationMasks();
+    abstract Boolean outputSegmentationMasks();
 
     abstract Optional<ResultListener<PoseLandmarkerResult, MPImage>> resultListener();
 

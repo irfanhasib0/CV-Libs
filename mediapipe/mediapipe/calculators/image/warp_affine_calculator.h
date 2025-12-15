@@ -15,13 +15,8 @@
 #ifndef MEDIAPIPE_CALCULATORS_IMAGE_WARP_AFFINE_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_IMAGE_WARP_AFFINE_CALCULATOR_H_
 
-#include <array>
-#include <utility>
-
-#include "absl/strings/string_view.h"
-#include "mediapipe/calculators/image/warp_affine_calculator.pb.h"
-#include "mediapipe/framework/api3/contract.h"
-#include "mediapipe/framework/api3/node.h"
+#include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 #include "mediapipe/framework/formats/image.h"
 #include "mediapipe/framework/formats/image_frame.h"
 
@@ -29,10 +24,7 @@
 #include "mediapipe/gpu/gpu_buffer.h"
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-namespace mediapipe::api3 {
-
-template <typename ImageT>
-inline constexpr absl::string_view kWarpAffineNodeName;
+namespace mediapipe {
 
 // Runs affine transformation.
 //
@@ -68,39 +60,37 @@ inline constexpr absl::string_view kWarpAffineNodeName;
 //     }
 //   }
 template <typename ImageT>
-struct WarpAffineNode : Node<kWarpAffineNodeName<ImageT>> {
-  template <typename S>
-  struct Contract {
-    Input<S, ImageT> in_image{"IMAGE"};
-    Input<S, std::array<float, 16>> matrix{"MATRIX"};
-    Input<S, std::pair<int, int>> output_size{"OUTPUT_SIZE"};
-
-    Output<S, ImageT> out_image{"IMAGE"};
-
-    Options<S, mediapipe::WarpAffineCalculatorOptions> options;
-  };
+class WarpAffineCalculatorIntf : public mediapipe::api2::NodeIntf {
+ public:
+  static constexpr mediapipe::api2::Input<ImageT> kInImage{"IMAGE"};
+  static constexpr mediapipe::api2::Input<std::array<float, 16>> kMatrix{
+      "MATRIX"};
+  static constexpr mediapipe::api2::Input<std::pair<int, int>> kOutputSize{
+      "OUTPUT_SIZE"};
+  static constexpr mediapipe::api2::Output<ImageT> kOutImage{"IMAGE"};
 };
 
 #if !MEDIAPIPE_DISABLE_OPENCV
-
-template <>
-inline constexpr absl::string_view kWarpAffineNodeName<ImageFrame> =
-    "WarpAffineCalculatorCpu";
-
+class WarpAffineCalculatorCpu : public WarpAffineCalculatorIntf<ImageFrame> {
+ public:
+  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorCpu, kInImage, kMatrix,
+                           kOutputSize, kOutImage);
+};
 #endif  // !MEDIAPIPE_DISABLE_OPENCV
-
 #if !MEDIAPIPE_DISABLE_GPU
-
-template <>
-inline constexpr absl::string_view kWarpAffineNodeName<GpuBuffer> =
-    "WarpAffineCalculatorGpu";
-
+class WarpAffineCalculatorGpu
+    : public WarpAffineCalculatorIntf<mediapipe::GpuBuffer> {
+ public:
+  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculatorGpu, kInImage, kMatrix,
+                           kOutputSize, kOutImage);
+};
 #endif  // !MEDIAPIPE_DISABLE_GPU
+class WarpAffineCalculator : public WarpAffineCalculatorIntf<mediapipe::Image> {
+ public:
+  MEDIAPIPE_NODE_INTERFACE(WarpAffineCalculator, kInImage, kMatrix, kOutputSize,
+                           kOutImage);
+};
 
-template <>
-inline constexpr absl::string_view kWarpAffineNodeName<Image> =
-    "WarpAffineCalculator";
-
-}  // namespace mediapipe::api3
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_CALCULATORS_IMAGE_WARP_AFFINE_CALCULATOR_H_

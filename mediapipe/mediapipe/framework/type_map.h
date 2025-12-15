@@ -148,7 +148,7 @@ class StaticMap {
    public:
     ValueInserter(const char* file_and_line, const KeyType& key,
                   const MediaPipeTypeData& value) {
-      StaticMap* static_map = GetMap();
+      MapName* static_map = GetMap();
       absl::MutexLock l(&(static_map->map_lock_));
 
       typename MapType::iterator it = static_map->internal_map_.find(key);
@@ -211,10 +211,10 @@ class StaticMap {
   friend class StaticMap::ValueInserter;
 
   // Returns a pointer to the one true instance of MapName class.
-  static StaticMap* GetMap() {
+  static MapName* GetMap() {
     // TODO: Uses gtl::NoDestructor for the thread-safe one-time
     // initialization if gtl::NoDestructor will be open sourced by ABSL.
-    static StaticMap* instance = new MapName();
+    static MapName* instance = new MapName();
     return instance;
   }
 

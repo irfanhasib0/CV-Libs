@@ -100,14 +100,14 @@ FaceLandmarker* CppFaceLandmarkerCreate(const FaceLandmarkerOptions& options,
           if (!cpp_result.ok()) {
             ABSL_LOG(ERROR) << "Detection failed: " << cpp_result.status();
             CppProcessError(cpp_result.status(), &error_msg);
-            result_callback(nullptr, nullptr, timestamp, error_msg);
+            result_callback({}, MpImage(), timestamp, error_msg);
             free(error_msg);
             return;
           }
 
           // Result is valid for the lifetime of the callback function.
-          auto result = std::make_unique<FaceLandmarkerResult>();
-          CppConvertToFaceLandmarkerResult(*cpp_result, result.get());
+          FaceLandmarkerResult result;
+          CppConvertToFaceLandmarkerResult(*cpp_result, &result);
 
           const auto& image_frame = image.GetImageFrameSharedPtr();
           const MpImage mp_image = {
@@ -118,8 +118,10 @@ FaceLandmarker* CppFaceLandmarkerCreate(const FaceLandmarkerOptions& options,
                   .width = image_frame->Width(),
                   .height = image_frame->Height()}};
 
-          result_callback(result.release(), &mp_image, timestamp,
+          result_callback(&result, mp_image, timestamp,
                           /* error_msg= */ nullptr);
+
+          CppCloseFaceLandmarkerResult(&result);
         };
   }
 
@@ -133,9 +135,9 @@ FaceLandmarker* CppFaceLandmarkerCreate(const FaceLandmarkerOptions& options,
   return landmarker->release();
 }
 
-int CppFaceLandmarkerDetect(void* landmarker, const MpImage* image,
+int CppFaceLandmarkerDetect(void* landmarker, const MpImage& image,
                             FaceLandmarkerResult* result, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
+  if (image.type == MpImage::GPU_BUFFER) {
     const absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet.");
 
@@ -144,9 +146,9 @@ int CppFaceLandmarkerDetect(void* landmarker, const MpImage* image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
+      static_cast<ImageFormat::Format>(image.image_frame.format),
+      image.image_frame.image_buffer, image.image_frame.width,
+      image.image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -163,11 +165,11 @@ int CppFaceLandmarkerDetect(void* landmarker, const MpImage* image,
   return 0;
 }
 
-int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage* image,
+int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage& image,
                                     int64_t timestamp_ms,
                                     FaceLandmarkerResult* result,
                                     char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
+  if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -176,9 +178,9 @@ int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage* image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
+      static_cast<ImageFormat::Format>(image.image_frame.format),
+      image.image_frame.image_buffer, image.image_frame.width,
+      image.image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -195,9 +197,9 @@ int CppFaceLandmarkerDetectForVideo(void* landmarker, const MpImage* image,
   return 0;
 }
 
-int CppFaceLandmarkerDetectAsync(void* landmarker, const MpImage* image,
+int CppFaceLandmarkerDetectAsync(void* landmarker, const MpImage& image,
                                  int64_t timestamp_ms, char** error_msg) {
-  if (image->type == MpImage::GPU_BUFFER) {
+  if (image.type == MpImage::GPU_BUFFER) {
     absl::Status status =
         absl::InvalidArgumentError("GPU Buffer not supported yet");
 
@@ -206,9 +208,9 @@ int CppFaceLandmarkerDetectAsync(void* landmarker, const MpImage* image,
   }
 
   const auto img = CreateImageFromBuffer(
-      static_cast<ImageFormat::Format>(image->image_frame.format),
-      image->image_frame.image_buffer, image->image_frame.width,
-      image->image_frame.height);
+      static_cast<ImageFormat::Format>(image.image_frame.format),
+      image.image_frame.image_buffer, image.image_frame.width,
+      image.image_frame.height);
 
   if (!img.ok()) {
     ABSL_LOG(ERROR) << "Failed to create Image: " << img.status();
@@ -250,14 +252,14 @@ void* face_landmarker_create(struct FaceLandmarkerOptions* options,
       *options, error_msg);
 }
 
-int face_landmarker_detect_image(void* landmarker, const MpImage* image,
+int face_landmarker_detect_image(void* landmarker, const MpImage& image,
                                  FaceLandmarkerResult* result,
                                  char** error_msg) {
   return mediapipe::tasks::c::vision::face_landmarker::CppFaceLandmarkerDetect(
       landmarker, image, result, error_msg);
 }
 
-int face_landmarker_detect_for_video(void* landmarker, const MpImage* image,
+int face_landmarker_detect_for_video(void* landmarker, const MpImage& image,
                                      int64_t timestamp_ms,
                                      FaceLandmarkerResult* result,
                                      char** error_msg) {
@@ -266,7 +268,7 @@ int face_landmarker_detect_for_video(void* landmarker, const MpImage* image,
                                       error_msg);
 }
 
-int face_landmarker_detect_async(void* landmarker, const MpImage* image,
+int face_landmarker_detect_async(void* landmarker, const MpImage& image,
                                  int64_t timestamp_ms, char** error_msg) {
   return mediapipe::tasks::c::vision::face_landmarker::
       CppFaceLandmarkerDetectAsync(landmarker, image, timestamp_ms, error_msg);

@@ -22,8 +22,7 @@ objc_library(
     hdrs = ["sources/MPPHolisticLandmarkerResult+ProtobufHelpers.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     deps = [
@@ -32,6 +31,5 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/holistic_landmarker:MPPHolisticLandmarkerResult",
         "//mediapipe/tasks/ios/vision/holistic_landmarker/utils:MPPHolisticLandmarkerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

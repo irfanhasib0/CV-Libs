@@ -14,21 +14,22 @@
 
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.h"
 
+#include <algorithm>
 #include <set>
 #include <utility>
 
 #include "absl/log/absl_check.h"
 #include "absl/memory/memory.h"
-#include "absl/status/status.h"
-#include "absl/status/statusor.h"
 #include "mediapipe/calculators/util/landmarks_refinement_calculator.pb.h"
-#include "mediapipe/framework/api3/calculator.h"
-#include "mediapipe/framework/api3/calculator_context.h"
+#include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
+#include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/proto_ns.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
 
-namespace mediapipe::api3 {
+namespace mediapipe {
+
+namespace api2 {
 
 namespace {
 
@@ -109,10 +110,10 @@ void RefineZ(
 
 }  // namespace
 
-class LandmarksRefinementNodeImpl
-    : public Calculator<LandmarksRefinementNode, LandmarksRefinementNodeImpl> {
-  absl::Status Open(CalculatorContext<LandmarksRefinementNode>& cc) override {
-    options_ = cc.options.Get();
+class LandmarksRefinementCalculatorImpl
+    : public NodeImpl<LandmarksRefinementCalculator> {
+  absl::Status Open(CalculatorContext* cc) override {
+    options_ = cc->Options<LandmarksRefinementCalculatorOptions>();
 
     // Validate refinements.
     for (int i = 0; i < options_.refinement_size(); ++i) {
@@ -140,18 +141,17 @@ class LandmarksRefinementNodeImpl
                         GetNumberOfRefinedLandmarks(options_.refinement()));
 
     // Validate that number of refinements and landmark streams is the same.
-    RET_CHECK_EQ(cc.landmarks.Count(), options_.refinement_size())
+    RET_CHECK_EQ(kLandmarks(cc).Count(), options_.refinement_size())
         << "There are " << options_.refinement_size() << " refinements while "
-        << cc.landmarks.Count() << " landmark streams";
+        << kLandmarks(cc).Count() << " landmark streams";
 
     return absl::OkStatus();
   }
 
-  absl::Status Process(
-      CalculatorContext<LandmarksRefinementNode>& cc) override {
+  absl::Status Process(CalculatorContext* cc) override {
     // If any of the refinement landmarks is missing - refinement won't happen.
-    for (const auto& landmarks_stream : cc.landmarks) {
-      if (!landmarks_stream) {
+    for (const auto& landmarks_stream : kLandmarks(cc)) {
+      if (landmarks_stream.IsEmpty()) {
         return absl::OkStatus();
       }
     }
@@ -162,9 +162,9 @@ class LandmarksRefinementNodeImpl
       refined_landmarks->add_landmark();
     }
 
-    // Apply input landmarks to output refined landmarks in provided order.
-    for (int i = 0; i < cc.landmarks.Count(); ++i) {
-      const auto& landmarks = cc.landmarks.At(i).GetOrDie();
+    // Apply input landmarks to outpu refined landmarks in provided order.
+    for (int i = 0; i < kLandmarks(cc).Count(); ++i) {
+      const auto& landmarks = kLandmarks(cc)[i].Get();
       const auto& refinement = options_.refinement(i);
 
       // Check number of landmarks in mapping and stream are the same.
@@ -184,7 +184,7 @@ class LandmarksRefinementNodeImpl
       // Visibility and presence are not currently refined and are left as `0`.
     }
 
-    cc.refined_landmarks.Send(std::move(refined_landmarks));
+    kRefinedLandmarks(cc).Send(std::move(refined_landmarks));
     return absl::OkStatus();
   }
 
@@ -193,4 +193,7 @@ class LandmarksRefinementNodeImpl
   int n_refined_landmarks_ = 0;
 };
 
-}  // namespace mediapipe::api3
+MEDIAPIPE_NODE_IMPLEMENTATION(LandmarksRefinementCalculatorImpl);
+
+}  // namespace api2
+}  // namespace mediapipe

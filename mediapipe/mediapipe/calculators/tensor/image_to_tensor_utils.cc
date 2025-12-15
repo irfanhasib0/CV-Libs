@@ -15,22 +15,12 @@
 #include "mediapipe/calculators/tensor/image_to_tensor_utils.h"
 
 #include <array>
-#include <cmath>
-#include <memory>
-#include <utility>
 
-#include "absl/status/statusor.h"
+#include "absl/status/status.h"
 #include "absl/types/optional.h"
 #include "mediapipe/framework/api2/packet.h"
-#include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/formats/image.h"
-#include "mediapipe/framework/formats/image_frame.h"
-#include "mediapipe/framework/formats/tensor.h"
 #include "mediapipe/framework/port/ret_check.h"
-#include "mediapipe/framework/port/status_macros.h"
-#if !MEDIAPIPE_DISABLE_GPU
-#include "mediapipe/gpu/gpu_buffer.h"
-#endif  // !MEDIAPIPE_DISABLE_GPU
+#include "mediapipe/framework/port/statusor.h"
 
 namespace mediapipe {
 
@@ -279,16 +269,12 @@ absl::StatusOr<std::shared_ptr<const mediapipe::Image>> GetInputImage(
         image_packet) {
   return image_packet.Visit(
       [&image_packet](const mediapipe::Image&) {
-        return image_packet.Share<mediapipe::Image>();
+        return SharedPtrWithPacket<mediapipe::Image>(image_packet);
       },
-      [&image_packet](const mediapipe::ImageFrame&)
-          -> absl::StatusOr<std::shared_ptr<const mediapipe::Image>> {
-        MP_ASSIGN_OR_RETURN(
-            std::shared_ptr<const mediapipe::ImageFrame> image_frame,
-            image_packet.Share<mediapipe::ImageFrame>());
+      [&image_packet](const mediapipe::ImageFrame&) {
         return std::make_shared<const mediapipe::Image>(
             std::const_pointer_cast<mediapipe::ImageFrame>(
-                std::move(image_frame)));
+                SharedPtrWithPacket<mediapipe::ImageFrame>(image_packet)));
       });
 }
 

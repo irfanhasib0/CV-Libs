@@ -40,12 +40,11 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPImageSegmenterObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPImageSegmenterTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     data = [
@@ -59,8 +58,6 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:MPPMaskTestUtils",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenter",
         "//mediapipe/tasks/ios/vision/image_segmenter:MPPImageSegmenterResult",
-        "//third_party/apple_frameworks:Foundation",
-        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

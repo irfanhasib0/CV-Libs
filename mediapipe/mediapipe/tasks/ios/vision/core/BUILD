@@ -22,8 +22,7 @@ objc_library(
     hdrs = ["sources/MPPImage.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     module_name = "MPPImage",
     deps = [
@@ -31,7 +30,6 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
         "//third_party/apple_frameworks:CoreMedia",
         "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
     ],
 )
@@ -40,7 +38,6 @@ objc_library(
     name = "MPPRunningMode",
     hdrs = ["sources/MPPRunningMode.h"],
     module_name = "MPPRunningMode",
-    deps = ["//third_party/apple_frameworks:Foundation"],
 )
 
 objc_library(
@@ -49,8 +46,7 @@ objc_library(
     hdrs = ["sources/MPPVisionPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPImage",
@@ -61,7 +57,6 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPRegionOfInterest",
         "//mediapipe/tasks/ios/components/containers/utils:MPPRegionOfInterestHelpers",
         "//mediapipe/tasks/ios/vision/core/utils:MPPImageUtils",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -71,8 +66,7 @@ objc_library(
     hdrs = ["sources/MPPVisionTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPImage",
@@ -86,7 +80,6 @@ objc_library(
         "//mediapipe/tasks/ios/common/utils:NSStringHelpers",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
-        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
         "@com_google_absl//absl/status:statusor",
     ],
@@ -98,12 +91,10 @@ objc_library(
     hdrs = ["sources/MPPMask.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

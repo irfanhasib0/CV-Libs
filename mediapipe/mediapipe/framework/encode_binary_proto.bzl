@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """A rule for encoding a text format protocol buffer into binary.
 
 Example usage:
@@ -147,6 +148,7 @@ _encode_binary_proto = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
+                ["proto"],
             ],
         ),
         "input": attr.label(
@@ -163,14 +165,14 @@ _encode_binary_proto = rule(
 def encode_binary_proto(name, input, message_type, deps, **kwargs):
     if type(input) == type("string"):
         input_label = input
-        srcs = [input]
+        textproto_srcs = [input]
     elif type(input) == type(dict()):
         # We cannot accept a select, as macros are unable to manipulate selects.
         input_label = select(input)
         srcs_dict = dict()
         for k, v in input.items():
             srcs_dict[k] = [v]
-        srcs = select(srcs_dict)
+        textproto_srcs = select(srcs_dict)
     else:
         fail("input should be a string or a dict, got %s" % input)
 
@@ -223,6 +225,7 @@ generate_proto_descriptor_set = rule(
         "deps": attr.label_list(
             providers = [
                 [ProtoInfo],
+                ["proto"],
             ],
         ),
     },

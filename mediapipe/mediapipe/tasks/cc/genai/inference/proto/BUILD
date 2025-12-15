@@ -17,10 +17,6 @@ load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 package(default_visibility = [
     "//mediapipe/tasks:__subpackages__",
     "//mediapipe/tasks/web/genai/llm_inference:__subpackages__",
-    "//mediapipe/web/graph_runner:__subpackages__",
-    "//third_party/odml/infra/genai/inference:__subpackages__",
-    # TODO: Remove this once the litert code is moved to litert_lm.
-    "//third_party/odml/litert_lm:__subpackages__",
 ])
 
 licenses(["notice"])
@@ -33,10 +29,7 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "llm_params_proto",
     srcs = ["llm_params.proto"],
-    deps = [
-        ":prompt_template_proto",
-        ":transformer_params_proto",
-    ],
+    deps = [":transformer_params_proto"],
 )
 
 mediapipe_proto_library(
@@ -48,9 +41,4 @@ mediapipe_proto_library(
 mediapipe_proto_library(
     name = "sampler_params_proto",
     srcs = ["sampler_params.proto"],
-)
-
-mediapipe_proto_library(
-    name = "prompt_template_proto",
-    srcs = ["prompt_template.proto"],
 )

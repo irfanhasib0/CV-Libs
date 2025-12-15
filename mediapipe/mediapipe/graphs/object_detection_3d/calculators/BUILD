@@ -96,7 +96,7 @@ cc_library(
         "//mediapipe/util:color_cc_proto",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )

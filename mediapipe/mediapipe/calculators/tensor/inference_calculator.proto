@@ -145,18 +145,9 @@ message InferenceCalculatorOptions {
       optional string accelerator_name = 3;
     }
     message Xnnpack {
-      reserved 3;
       // Number of threads for XNNPACK delegate. (By default, calculator tries
       // to choose optimal number of threads depending on the device.)
       optional int32 num_threads = 1 [default = -1];
-      // Enables an experimental TfLite feature to directly access the MP input
-      // tensors (and this way avoids copying the data). Note that this requires
-      // *all* input tensors to be aligned to tflite::kDefaultTensorAlignment
-      // bytes and that the model has no duplicate output tensors (tensors with
-      // identical TfLite tensor indices) and no passthrough input->output
-      // tensors (input and output tensors with identical TfLite tensor
-      // indices).
-      optional bool enable_zero_copy_tensor_io = 7;
     }
 
     oneof delegate {
@@ -283,7 +274,7 @@ message InferenceCalculatorOptions {
       TensorNamesMap input_tensor_names_map = 3;
     }
 
-    // Maps the output tensors of the TfLite model to the output tensors of
+    // Maps the output tensors of the TfLite model to the the output tensors of
     // the InferenceCalculator. Values are model I/O tensor indices or tensor
     // names.
     oneof OutputTensorMap {

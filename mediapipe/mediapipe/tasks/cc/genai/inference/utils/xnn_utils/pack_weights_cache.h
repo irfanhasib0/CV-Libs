@@ -20,41 +20,27 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <variant>
 
 #include "absl/container/flat_hash_map.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/string_view.h"
 #include "flatbuffers/flatbuffer_builder.h"
+#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/named_buffer_generated.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK
-// clang-format off
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/memory_mapped_file.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/llm_utils/scoped_file.h"
-// clang-format on
 
 namespace mediapipe::tasks::genai::xnn_utils {
-
-using ::mediapipe::tasks::genai::llm_utils::MemoryMappedFile;
-using ::mediapipe::tasks::genai::llm_utils::ScopedFile;
 
 // An implementation of XnnWeightsCache that allows cross-process packed weights
 // sharing. This implementation does not really support insertion, which means
 // either the cache is fully built already, or will be built from scratch.
 class PackWeightsCache : public XnnWeightsCache {
  public:
-  // File path to the weight cache. If the file exists, the
-  // cache will be loaded from the file. Otherwise, the weights cache will be
-  // built and written to the file.
+  // `cache_path` is used in Initialize() and Finalize().
   explicit PackWeightsCache(absl::string_view cache_path);
-  // File descriptor to write cache data to or read cache data from. Must be
-  // writable.
-  // TODO: b/401011041 - Consider supporting read-only file descriptors if the
-  // cache has already been built.
-  explicit PackWeightsCache(std::shared_ptr<ScopedFile> scoped_file);
   ~PackWeightsCache() override;
 
   // Initializes the cache. The default implementation loads the serialized
@@ -78,18 +64,28 @@ class PackWeightsCache : public XnnWeightsCache {
   virtual bool ShouldDoubleCheckCompatibility(
       const xnn_weights_cache_look_up_key*);
 
- private:
-  // Returns writable mapped memory of the cache file. Returns nullptr in case
-  // of any error.
-  // TODO: b/401011041 - Consider returning a readable memory mapping if the
-  // cache file has already been built.
-  std::shared_ptr<MemoryMappedFile> GetMmapFile();
+  // Returns mmaped memory of `filename`. Returns nullptr in case of any error.
+  // Inheritance classes can overwrite this function e.g. if there's no
+  // filesystem.
+  virtual std::shared_ptr<llm_utils::MemoryMappedFile> GetMmapFile(
+      absl::string_view filename);
 
+  // Appends `data` from the end of `filename`. Inheritance classes can
+  // overwrite this function e.g. if there's no filesystem.
+  virtual absl::Status Append(absl::string_view filename,
+                              absl::string_view data);
+
+  // Inserts `data` at the beginning of `filename`. Inheritance classes can
+  // overwrite this function e.g. if there's no filesystem.
+  virtual absl::Status Prepend(absl::string_view filename,
+                               absl::string_view data);
+
+ private:
   absl::Status Append(absl::string_view data);
   absl::Status Prepend(absl::string_view data);
 
   absl::Status InitializeFromCache(
-      std::shared_ptr<MemoryMappedFile> mmap_cache);
+      std::shared_ptr<llm_utils::MemoryMappedFile> mmap_cache);
 
   // A series of functions for `xnn_weights_cache_provider`. They need to be
   // static such that we can assign function pointers. They need to be class
@@ -115,10 +111,8 @@ class PackWeightsCache : public XnnWeightsCache {
 
   xnn_weights_cache_provider cache_provider_;
 
-  // File path or descriptor to write the cache file to.
-  std::variant<std::string, std::shared_ptr<ScopedFile>> cache_file_;
-
-  std::shared_ptr<MemoryMappedFile> mmap_file_;
+  std::string cache_path_;
+  std::shared_ptr<llm_utils::MemoryMappedFile> mmap_file_;
   // Immutable flatbuffer.
   std::shared_ptr<const NamedBuffers> named_buffers_;
 

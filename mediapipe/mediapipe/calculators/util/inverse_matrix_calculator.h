@@ -15,35 +15,37 @@
 #ifndef MEDIAPIPE_CALCULATORS_UTIL_INVERSE_MATRIX_CALCULATOR_H_
 #define MEDIAPIPE_CALCULATORS_UTIL_INVERSE_MATRIX_CALCULATOR_H_
 
-#include <array>
+#include "mediapipe/framework/api2/node.h"
+#include "mediapipe/framework/api2/port.h"
 
-#include "absl/strings/string_view.h"
-#include "mediapipe/framework/api3/contract.h"
-#include "mediapipe/framework/api3/node.h"
+namespace mediapipe {
 
-namespace mediapipe::api3 {
-
-inline constexpr absl::string_view kInverseMatrixNodeName =
-    "InverseMatrixCalculator";
-
-// Inverses a row-major 4x4 matrix.
+// Runs affine transformation.
 //
-// Proto usage example:
+// Input:
+//   MATRIX - std::array<float, 16>
+//     Row major 4x4 matrix to inverse.
+//
+// Output:
+//   MATRIX - std::array<float, 16>
+//     Row major 4x4 inversed matrix.
+//
+// Usage example:
 //   node {
-//     calculator: "InverseMatrixCalculator"
+//     calculator: "dishti.aimatter.InverseMatrixCalculator"
 //     input_stream: "MATRIX:input_matrix"
 //     output_stream: "MATRIX:output_matrix"
 //   }
-struct InverseMatrixNode : Node<kInverseMatrixNodeName> {
-  template <typename S>
-  struct Contract {
-    // Row major 4x4 matrix to inverse.
-    Input<S, std::array<float, 16>> input_matrix{"MATRIX"};
-    // Row major 4x4 inversed matrix.
-    Output<S, std::array<float, 16>> output_matrix{"MATRIX"};
-  };
+class InverseMatrixCalculator : public mediapipe::api2::NodeIntf {
+ public:
+  static constexpr mediapipe::api2::Input<std::array<float, 16>> kInputMatrix{
+      "MATRIX"};
+  static constexpr mediapipe::api2::Output<std::array<float, 16>> kOutputMatrix{
+      "MATRIX"};
+  MEDIAPIPE_NODE_INTERFACE(InverseMatrixCalculator, kInputMatrix,
+                           kOutputMatrix);
 };
 
-}  // namespace mediapipe::api3
+}  // namespace mediapipe
 
 #endif  // MEDIAPIPE_CALCULATORS_UTIL_INVERSE_MATRIX_CALCULATOR_H_

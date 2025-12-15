@@ -22,10 +22,7 @@
 #endif
 
 #if MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
-#include "absl/base/thread_annotations.h"
-#include "absl/log/absl_log.h"
 #include "absl/synchronization/mutex.h"
-#include "absl/time/time.h"
 #include "mediapipe/framework/deps/no_destructor.h"
 #endif  // MEDIAPIPE_NEEDS_GL_THREAD_COLLECTOR
 
@@ -60,11 +57,7 @@ class GlThreadCollector {
       return active_threads_ == 0;
     };
     absl::MutexLock l(&mutex_);
-    constexpr absl::Duration kTimeout = absl::Seconds(30);
-    if (!mutex_.AwaitWithTimeout(absl::Condition(&done), kTimeout)) {
-      ABSL_LOG(DFATAL) << "Failed to shut down GL threads. This means some "
-                          "system holds on to a reference to a GL context.";
-    }
+    mutex_.Await(absl::Condition(&done));
   }
 
   absl::Mutex mutex_;

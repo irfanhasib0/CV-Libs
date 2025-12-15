@@ -114,9 +114,7 @@ TEST(CalculatorTest, SourceProcessOrder) {
   PacketSet input_side_packets(tool::CreateTagMap({}).value());
 
   CalculatorState calculator_state("Node", /*node_id=*/0, "Calculator",
-                                   CalculatorGraphConfig::Node(),
-                                   /*profiling_context=*/nullptr,
-                                   /*graph_service_manager=*/nullptr);
+                                   CalculatorGraphConfig::Node(), nullptr);
 
   calculator_state.SetInputSidePackets(&input_side_packets);
 

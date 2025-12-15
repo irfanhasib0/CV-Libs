@@ -442,7 +442,7 @@ GTM_UNITTESTING_DEPS = [
 
 objc_library(
     name = "GTM_UnitTesting",
-    testonly = True,
+    testonly = 1,
     hdrs = GTM_UNITTESTING_HDRS,
     non_arc_srcs = GTM_UNITTESTING_NON_ARC_SRCS,
     sdk_frameworks = GTM_UNITTESTING_SDK_FRAMEWORKS,
@@ -452,7 +452,7 @@ objc_library(
 
 objc_library(
     name = "GTM_UnitTesting_GTM_USING_XCTEST",
-    testonly = True,
+    testonly = 1,
     hdrs = GTM_UNITTESTING_HDRS,
     defines = ["GTM_USING_XCTEST=1"],
     non_arc_srcs = GTM_UNITTESTING_NON_ARC_SRCS,
@@ -463,7 +463,7 @@ objc_library(
 
 objc_library(
     name = "GTM_UnitTestingAppLib",
-    testonly = True,
+    testonly = 1,
     hdrs = [
         "UnitTesting/GTMCodeCoverageApp.h",
         "UnitTesting/GTMIPhoneUnitTestDelegate.h",

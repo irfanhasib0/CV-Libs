@@ -146,7 +146,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings:str_format",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -199,7 +199,6 @@ cc_library(
 PARALLEL_COPTS = ["-DPARALLEL_INVOKER_ACTIVE"] + select({
     "//mediapipe:apple": [],
     "//mediapipe:android": [],
-    "//mediapipe:emscripten": ["-UPARALLEL_INVOKER_ACTIVE"],
     "//conditions:default": [],
 })
 
@@ -295,7 +294,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/strings",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -398,7 +397,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -502,7 +501,7 @@ cc_library(
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/memory",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
     alwayslink = 1,
 )

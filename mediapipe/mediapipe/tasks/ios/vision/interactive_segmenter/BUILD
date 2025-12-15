@@ -20,10 +20,7 @@ objc_library(
     name = "MPPInteractiveSegmenterOptions",
     srcs = ["sources/MPPInteractiveSegmenterOptions.m"],
     hdrs = ["sources/MPPInteractiveSegmenterOptions.h"],
-    deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
 )
 
 objc_library(
@@ -33,7 +30,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -43,8 +39,7 @@ objc_library(
     hdrs = ["sources/MPPInteractiveSegmenter.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     module_name = "MPPInteractiveSegmenter",
@@ -65,6 +60,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/interactive_segmenter/utils:MPPInteractiveSegmenterOptionsHelpers",
         "//mediapipe/tasks/ios/vision/interactive_segmenter/utils:MPPInteractiveSegmenterResultHelpers",
         "//mediapipe/util:label_map_cc_proto",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

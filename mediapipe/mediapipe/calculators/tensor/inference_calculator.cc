@@ -15,26 +15,20 @@
 #include "mediapipe/calculators/tensor/inference_calculator.h"
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_cat.h"
-#include "absl/strings/str_format.h"
-#include "absl/strings/str_join.h"
 #include "absl/strings/string_view.h"
 #include "mediapipe/calculators/tensor/inference_calculator.pb.h"
 #include "mediapipe/framework/api2/node.h"
 #include "mediapipe/framework/api2/packet.h"
 #include "mediapipe/framework/calculator_framework.h"
-#include "mediapipe/framework/port.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
-#include "mediapipe/framework/resources.h"
 #include "mediapipe/framework/tool/subgraph_expansion.h"
 #include "mediapipe/util/tflite/tflite_model_loader.h"
 #include "tensorflow/lite/core/api/op_resolver.h"
@@ -54,17 +48,13 @@ class InferenceCalculatorSelectorImpl
             subgraph_node);
     std::vector<absl::string_view> impls;
 
-#if !MEDIAPIPE_FORCE_CPU_INFERENCE
-
     const bool should_use_gpu =
         !options.has_delegate() ||  // Use GPU delegate if not specified
         (options.has_delegate() && options.delegate().has_gpu());
     if (should_use_gpu) {
       const auto& api = options.delegate().gpu().api();
       using Gpu = ::mediapipe::InferenceCalculatorOptions::Delegate::Gpu;
-#if MEDIAPIPE_METAL_ENABLED
       impls.emplace_back("Metal");
-#endif
       const bool prefer_gl_advanced =
           options.delegate().gpu().use_advanced_gpu_api() &&
           (api == Gpu::ANY || api == Gpu::OPENGL || api == Gpu::OPENCL);
@@ -76,23 +66,11 @@ class InferenceCalculatorSelectorImpl
         impls.emplace_back("GlAdvanced");
       }
     }
-#endif  // !MEDIAPIPE_FORCE_CPU_INFERENCE
     impls.emplace_back("Cpu");
     impls.emplace_back("Xnnpack");
-    std::vector<std::string> missing_impls;
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);
-      if (!CalculatorBaseRegistry::IsRegistered(impl)) {
-        missing_impls.push_back(impl);
-        continue;
-      };
-
-      if (!missing_impls.empty()) {
-        ABSL_LOG(WARNING) << absl::StrFormat(
-            "Missing InferenceCalculator registration for %s. Falling back to "
-            "%s, Check if the build dependency is present.",
-            absl::StrJoin(missing_impls, ", "), impl);
-      }
+      if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) continue;
 
       VLOG(1) << "Using " << suffix << " for InferenceCalculator with "
               << (options.has_model_path()
@@ -105,9 +83,7 @@ class InferenceCalculatorSelectorImpl
       impl_node.set_calculator(impl);
       return tool::MakeSingleNodeGraph(std::move(impl_node));
     }
-    return absl::UnimplementedError(
-        absl::StrCat("no implementation available with suffixes: ",
-                     absl::StrJoin(impls, ", ")));
+    return absl::UnimplementedError("no implementation available");
   }
 };
 
@@ -123,37 +99,10 @@ absl::StatusOr<Packet<TfLiteModelPtr>> InferenceCalculator::GetModelAsPacket(
     CalculatorContext* cc) {
   const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
   if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
-        auto model, TfLiteModelLoader::LoadFromPath(cc->GetResources(),
-                                                    options.model_path(),
-                                                    options.try_mmap_model()));
-    ABSL_CHECK(!model.IsEmpty());
-    VLOG(1) << absl::StrFormat(
-        "GetModelAsPacket successfully loaded model "
-        "(path: %s, size: %ld bytes)",
-        options.model_path(), model.Get()->allocation()->bytes());
-    return model;
+    return TfLiteModelLoader::LoadFromPath(options.model_path(),
+                                           options.try_mmap_model());
   }
   if (!kSideInModel(cc).IsEmpty()) return kSideInModel(cc);
-  return absl::Status(absl::StatusCode::kNotFound,
-                      "Must specify TFLite model as path or loaded model.");
-}
-
-absl::StatusOr<TfLiteModelWithResource>
-InferenceCalculator::GetModelPacketWithResource(
-    CalculatorContext* cc, std::optional<MMapMode> mmap_mode) {
-  const auto& options = cc->Options<mediapipe::InferenceCalculatorOptions>();
-  if (!options.model_path().empty()) {
-    MP_ASSIGN_OR_RETURN(
-        auto model, TfLiteModelLoader::LoadFromPathAndGetResource(
-                        cc->GetResources(), options.model_path(), mmap_mode));
-    ABSL_CHECK(!model.model_packet.IsEmpty());
-    VLOG(1) << absl::StrFormat(
-        "GetModelPacketWithResource successfully loaded model "
-        "(path: %s, size: %ld bytes)",
-        options.model_path(), model.model_packet.Get()->allocation()->bytes());
-    return model;
-  }
   return absl::Status(absl::StatusCode::kNotFound,
                       "Must specify TFLite model as path or loaded model.");
 }

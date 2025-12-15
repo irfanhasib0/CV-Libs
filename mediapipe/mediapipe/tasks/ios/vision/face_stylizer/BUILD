@@ -23,7 +23,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPImage",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -31,10 +30,7 @@ objc_library(
     name = "MPPFaceStylizerOptions",
     srcs = ["sources/MPPFaceStylizerOptions.m"],
     hdrs = ["sources/MPPFaceStylizerOptions.h"],
-    deps = [
-        "//mediapipe/tasks/ios/core:MPPTaskOptions",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    deps = ["//mediapipe/tasks/ios/core:MPPTaskOptions"],
 )
 
 objc_library(
@@ -43,8 +39,7 @@ objc_library(
     hdrs = ["sources/MPPFaceStylizer.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
         "",
     ],
@@ -59,6 +54,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/face_stylizer/utils:MPPFaceStylizerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/face_stylizer/utils:MPPFaceStylizerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

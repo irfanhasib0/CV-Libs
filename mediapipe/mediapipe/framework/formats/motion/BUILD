@@ -61,7 +61,7 @@ cc_test(
         "//mediapipe/framework/formats:location_opencv",
         "//mediapipe/framework/port:file_helpers",
         "//mediapipe/framework/port:gtest_main",
-        "//third_party:opencv",
+        "//mediapipe/framework/port:integral_types",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/log:absl_log",

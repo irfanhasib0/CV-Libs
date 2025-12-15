@@ -8,8 +8,7 @@ objc_library(
     hdrs = ["sources/MPPGestureRecognizerResult+ProtobufHelpers.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     deps = [
@@ -19,6 +18,5 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:parse_proto_utils",
         "//mediapipe/tasks/ios/vision/gesture_recognizer:MPPGestureRecognizerResult",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

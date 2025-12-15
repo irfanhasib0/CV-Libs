@@ -212,13 +212,13 @@ objc_library(
         "//third_party/apple_frameworks:AVFoundation",
         "//third_party/apple_frameworks:CoreAudio",
         "//third_party/apple_frameworks:CoreMedia",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
 objc_library(
     name = "MPPGraphTestBase",
-    testonly = True,
+    testonly = 1,
     srcs = [
         "MPPGraphTestBase.mm",
     ],
@@ -248,7 +248,7 @@ objc_library(
 
 objc_library(
     name = "mediapipe_framework_ios_testLib",
-    testonly = True,
+    testonly = 1,
     srcs = [
         "CFHolderTests.mm",
         "MPPDisplayLinkWeakTargetTests.mm",

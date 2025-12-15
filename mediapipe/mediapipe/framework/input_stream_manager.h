@@ -22,10 +22,11 @@
 #include <string>
 
 #include "absl/base/thread_annotations.h"
-#include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
 #include "mediapipe/framework/packet.h"
 #include "mediapipe/framework/packet_type.h"
+#include "mediapipe/framework/port.h"
+#include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/timestamp.h"
 
 namespace mediapipe {
@@ -68,10 +69,7 @@ class InputStreamManager {
   // Sets the header Packet.
   absl::Status SetHeader(const Packet& header);
 
-  Packet Header() const {
-    absl::MutexLock stream_lock(&stream_mutex_);
-    return header_;
-  }
+  const Packet& Header() const { return header_; }
 
   // Reset the input stream for another run of the graph (i.e. another
   // image/video/audio).
@@ -213,7 +211,7 @@ class InputStreamManager {
   const PacketType* packet_type_;
   bool back_edge_;
   // The header packet of the input stream.
-  Packet header_ ABSL_GUARDED_BY(stream_mutex_);
+  Packet header_;
 
   // The maximum queue size for this stream if set.
   int max_queue_size_ ABSL_GUARDED_BY(stream_mutex_) = -1;

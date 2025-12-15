@@ -54,7 +54,7 @@ cc_library(
     hdrs = ["matrix_converter.h"],
     deps = [
         ":matrix",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 
@@ -66,7 +66,7 @@ cc_test(
         ":matrix_converter",
         "//mediapipe/framework/port:gtest",
         "@com_google_googletest//:gtest_main",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ],
 )
 

@@ -245,7 +245,7 @@ bool ImageFrame::IsValidAlignmentNumber(uint32_t alignment_boundary) {
 // static
 std::string ImageFrame::InvalidFormatString(ImageFormat::Format format) {
 #ifdef MEDIAPIPE_PROTO_LITE
-  return absl::StrCat("Invalid format: ", ImageFormat::Format_Name(format));
+  return "Invalid format.";
 #else
   const proto_ns::EnumValueDescriptor* enum_value_descriptor =
       ImageFormat::Format_descriptor()->FindValueByNumber(format);

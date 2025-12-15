@@ -43,13 +43,12 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPFloatRingBufferObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPFloatRingBufferTests.m"],
     tags = TFL_DEFAULT_TAGS,
     deps = [
         "//mediapipe/tasks/ios/audio/core:MPPFloatRingBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -65,12 +64,11 @@ ios_unit_test(
 
 objc_library(
     name = "MPPAudioRecordObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPAudioRecordTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     data = [
@@ -82,8 +80,6 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -99,12 +95,11 @@ ios_unit_test(
 
 objc_library(
     name = "MPPAudioDataObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPAudioDataTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     data = [
@@ -116,8 +111,6 @@ objc_library(
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/test/audio/core/utils:AVAudioPCMBufferTestUtils",
         "//mediapipe/tasks/ios/test/utils:MPPFileInfo",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

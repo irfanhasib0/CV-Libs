@@ -26,12 +26,11 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPFaceDetectorObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPFaceDetectorTests.mm"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     data = [
@@ -45,9 +44,7 @@ objc_library(
         "//mediapipe/tasks/ios/test/vision/utils:MPPImageTestUtils",
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetector",
         "//mediapipe/tasks/ios/vision/face_detector:MPPFaceDetectorResult",
-        "//third_party/apple_frameworks:Foundation",
         "//third_party/apple_frameworks:UIKit",
-        "//third_party/apple_frameworks:XCTest",
     ] + select({
         "//third_party:opencv_ios_sim_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],
         "//third_party:opencv_ios_arm64_source_build": ["@ios_opencv_source//:opencv_xcframework"],

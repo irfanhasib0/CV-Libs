@@ -34,7 +34,6 @@ objc_library(
         ":MPPFaceDetectorResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -44,8 +43,7 @@ objc_library(
     hdrs = ["sources/MPPFaceDetector.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     deps = [
@@ -60,6 +58,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/face_detector/utils:MPPFaceDetectorOptionsHelpers",
         "//mediapipe/tasks/ios/vision/face_detector/utils:MPPFaceDetectorResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

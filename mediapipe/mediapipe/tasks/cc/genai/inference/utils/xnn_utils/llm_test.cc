@@ -14,10 +14,7 @@
 
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <functional>
 #include <initializer_list>
 #include <limits>
 #include <memory>
@@ -28,11 +25,11 @@
 #include <vector>
 
 #include "absl/flags/flag.h"
+#include "absl/log/absl_check.h"
 #include "absl/log/absl_log.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/match.h"
 #include "absl/strings/string_view.h"
-#include "absl/types/span.h"
 #include "mediapipe/framework/port/benchmark.h"
 #include "mediapipe/framework/port/gmock.h"
 #include "mediapipe/framework/port/gtest.h"
@@ -44,7 +41,6 @@
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/graph_builder.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_weights.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/phi.h"
-#include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/sampling.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/stablelm.h"
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/xnn_tensor.h"
 #include "xnnpack.h"  // from @XNNPACK
@@ -58,29 +54,22 @@ ABSL_FLAG(std::string, model_type, "GEMMA_2B",
 
 ABSL_FLAG(int, num_threads, 4, "The number of threads to use");
 
-namespace {
-static const char* const kXnnProfileCsvFile =
-#if __ANDROID__
-    "/data/local/tmp/xnn_profile.csv";
-#else
-    "/tmp/xnn_profile.csv";
-#endif
-}  // namespace
-
-ABSL_FLAG(
-    std::string, xnn_profile_csv, kXnnProfileCsvFile,
-    "Path at which to dump a CSV file with per-op profiling information.");
-
 namespace mediapipe::tasks::genai::xnn_utils {
 namespace {
 
-using ::benchmark::internal::Benchmark;
+constexpr ::absl::string_view kXnnProfileCsvFile{
+#if __ANDROID__
+    "/data/local/tmp/xnn_profile.csv"
+#else
+    "/tmp/xnn_profile.csv"
+#endif
+};
 
 std::unique_ptr<RuntimeConfigs> GetRunTimeConfigsForBenchmark() {
   auto runtime_config = std::make_unique<RuntimeConfigs>();
   runtime_config->xnn_num_threads = absl::GetFlag(FLAGS_num_threads);
-  runtime_config->xnn_profile = !absl::GetFlag(FLAGS_xnn_profile_csv).empty();
-  runtime_config->xnn_profile_csv = absl::GetFlag(FLAGS_xnn_profile_csv);
+  runtime_config->xnn_profile = false;
+  runtime_config->xnn_profile_csv = std::string(kXnnProfileCsvFile);
   return runtime_config;
 }
 
@@ -92,6 +81,7 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetFalconRW1BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
+    params.enable_dynamic_shape = true;
     return {std::make_unique<FalconRW1BBuilder>(
                 params, GetRunTimeConfigsForBenchmark()),
             params};
@@ -100,22 +90,7 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetGemma2BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
-    return {
-        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
-        params};
-  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA2_2B")) {
-    LlmParams params =
-        LlmParams::FromLLMParametersProto(llm_utils::GetGemma2_2BParams());
-    params.seq_size_T = seq_size;
-    params.enable_kv_cache = true;
-    return {
-        std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
-        params};
-  } else if (absl::EqualsIgnoreCase(model_type_string, "GEMMA3_1B")) {
-    LlmParams params =
-        LlmParams::FromLLMParametersProto(llm_utils::GetGemma3_1BParams());
-    params.seq_size_T = seq_size;
-    params.enable_kv_cache = true;
+    params.enable_dynamic_shape = true;
     return {
         std::make_unique<LlmBuilder>(params, GetRunTimeConfigsForBenchmark()),
         params};
@@ -124,6 +99,7 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetStablelm4E1T3BParams());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
+    params.enable_dynamic_shape = true;
     return {std::make_unique<Stablelm4E1T3BBuilder>(
                 params, GetRunTimeConfigsForBenchmark()),
             params};
@@ -132,6 +108,7 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
         LlmParams::FromLLMParametersProto(llm_utils::GetPhi2Params());
     params.seq_size_T = seq_size;
     params.enable_kv_cache = true;
+    params.enable_dynamic_shape = true;
     return {
         std::make_unique<Phi2Builder>(params, GetRunTimeConfigsForBenchmark()),
         params};
@@ -143,32 +120,15 @@ GetLlmBuilderAndParamsForBenchmark(size_t seq_size) {
 
 // Benchmark for the decoding latency.
 void RunBenchmarkDecode(Llm& llm, benchmark::State& state) {
-  const size_t batch_size = llm.GetLlmParams().batch_size_B;
-  const size_t sequence_length = state.range(0);
-  const size_t prompt_size = state.range(1);
-  std::mt19937 rng;
-  int vocab_size = llm.GetLlmParams().voc_size_V;
-  auto i32rng = std::bind(std::uniform_int_distribution<int>(0, vocab_size - 1),
-                          std::ref(rng));
-
-  std::vector<std::vector<int>> input_tokens(batch_size,
-                                             std::vector<int>(prompt_size));
-  for (int i = 0; i < batch_size; ++i) {
-    std::generate(input_tokens[i].begin(), input_tokens[i].end(),
-                  std::ref(i32rng));
-  }
-
   std::vector<int> token_ids;
-  int64_t num_token_processed = 0;
+  int num_token_processed = 0;
   for (auto s : state) {
-    state.PauseTiming();
-    MP_ASSERT_OK(llm.SeekTimeStep(0));
-    MP_ASSERT_OK(llm.AddInputTokens(input_tokens));
-    state.ResumeTiming();
-    while (llm.TotalTokenSize() < sequence_length) {
-      MP_ASSERT_OK(llm.GetNextToken(&token_ids));
-      // Expect token_ids.size() == batch_size.
-      num_token_processed += token_ids.size();
+    MP_ASSERT_OK(llm.GetNextToken(&token_ids));
+    num_token_processed++;
+    if (llm.TotalTokenSize() >= llm.GetLlmParams().seq_size_T) {
+      state.PauseTiming();
+      ABSL_CHECK_OK(llm.InitInputTokens({0}));
+      state.ResumeTiming();
     }
   }
   state.SetItemsProcessed(num_token_processed);
@@ -176,25 +136,11 @@ void RunBenchmarkDecode(Llm& llm, benchmark::State& state) {
 
 // Benchmark for the encoding latency.
 void RunBenchmarkEncode(Llm& llm, benchmark::State& state) {
-  const size_t batch_size = llm.GetLlmParams().batch_size_B;
-  const size_t prompt_size = state.range(1);
-  std::mt19937 rng;
-  int vocab_size = llm.GetLlmParams().voc_size_V;
-  auto i32rng = std::bind(std::uniform_int_distribution<int>(0, vocab_size - 1),
-                          std::ref(rng));
-  std::vector<std::vector<int>> input_tokens(batch_size,
-                                             std::vector<int>(prompt_size));
-  for (int i = 0; i < batch_size; ++i) {
-    std::generate(input_tokens[i].begin(), input_tokens[i].end(),
-                  std::ref(i32rng));
-  }
-  int64_t num_token_processed = 0;
+  std::vector<int> input_tokens(state.range(0), 0);
+  int num_token_processed = 0;
   for (auto s : state) {
-    state.PauseTiming();
-    MP_ASSERT_OK(llm.SeekTimeStep(0));
-    state.ResumeTiming();
-    MP_ASSERT_OK(llm.AddInputTokens(input_tokens));
-    num_token_processed += prompt_size * batch_size;
+    MP_ASSERT_OK(llm.InitInputTokens(input_tokens));
+    num_token_processed += state.range(0);
   }
   state.SetItemsProcessed(num_token_processed);
 }
@@ -208,7 +154,7 @@ void RunBenchmark(Llm& llm, benchmark::State& state) {
   } else if (benchmark_method == "encode") {
     RunBenchmarkEncode(llm, state);
   } else {
-    ABSL_LOG(FATAL) << "The value of flag benchmark_method should be either "
+    ABSL_LOG(FATAL) << "The value of flag benchamrk_method should be either "
                        "'decode' or 'encode', but got: "
                     << benchmark_method;
   }
@@ -234,12 +180,6 @@ class BenchmarkLlmMixedInt48WeightsLoader : public LlmWeightsLoader {
   }
 };
 
-static void BenchmarLlmSizes(Benchmark* b) {
-  for (const int& batch_size : {1, 4, 7, 8, 14, 16, 28, 32, 48, 64}) {
-    b->Args({/*sequence_length=*/512, /*prompt_size=*/128, batch_size});
-  }
-}
-
 }  // namespace
 
 // Benchmark LLM model specified by --model_type flag (QC8 weights, all
@@ -251,19 +191,7 @@ void BM_Llm_QCINT8(benchmark::State& state) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
-  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
-
-  RunBenchmark(*llm, state);
-}
-
-void BM_Llm_QCINT4(benchmark::State& state) {
-  auto [builder, params] = GetLlmBuilderAndParamsForBenchmark(state.range(0));
-  auto weights_loader =
-      std::make_unique<BenchmarkLlmWeightsLoader>(params, xnn_datatype_qcint4);
-
-  MP_ASSERT_OK_AND_ASSIGN(
-      auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
-  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
+  MP_ASSERT_OK(llm->InitInputTokens({0}));
 
   RunBenchmark(*llm, state);
 }
@@ -277,14 +205,13 @@ void BM_Llm_Mixed_INT48(benchmark::State& state) {
 
   MP_ASSERT_OK_AND_ASSIGN(
       auto llm, Llm::CreateLlm(std::move(weights_loader), std::move(builder)));
-  MP_ASSERT_OK(llm->AddInputTokens({{0}}));
+  MP_ASSERT_OK(llm->InitInputTokens({0}));
 
   RunBenchmark(*llm, state);
 }
 
 // Run benchmark for three different cache sizes: 64, 512, 1024.
-BENCHMARK(BM_Llm_QCINT8)->UseRealTime()->Apply(BenchmarLlmSizes);
-BENCHMARK(BM_Llm_QCINT4)->UseRealTime()->Apply(BenchmarLlmSizes);
-BENCHMARK(BM_Llm_Mixed_INT48)->UseRealTime()->Apply(BenchmarLlmSizes);
+BENCHMARK(BM_Llm_QCINT8)->Arg(64)->Arg(512)->Arg(1024);
+BENCHMARK(BM_Llm_Mixed_INT48)->Arg(64)->Arg(512)->Arg(1024);
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

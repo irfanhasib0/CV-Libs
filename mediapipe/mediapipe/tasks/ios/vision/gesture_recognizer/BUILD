@@ -24,7 +24,6 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPCategory",
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -37,7 +36,6 @@ objc_library(
         "//mediapipe/tasks/ios/components/processors:MPPClassifierOptions",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -47,8 +45,7 @@ objc_library(
     hdrs = ["sources/MPPGestureRecognizer.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     module_name = "MPPGestureRecognizer",
@@ -64,6 +61,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/gesture_recognizer/utils:MPPGestureRecognizerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

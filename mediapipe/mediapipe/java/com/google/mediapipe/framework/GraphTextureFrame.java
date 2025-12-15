@@ -172,7 +172,6 @@ public class GraphTextureFrame implements TextureFrame {
     }
   }
 
-  @SuppressWarnings("Finalize")
   @Override
   protected void finalize() throws Throwable {
     if (refCount > 0 || nativeBufferHandle != 0) {

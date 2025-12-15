@@ -14,7 +14,7 @@
 """Custom classifier."""
 
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, Union
+from typing import Any, Callable, Optional, Sequence, Union
 
 import tensorflow as tf
 
@@ -82,7 +82,6 @@ class Classifier(custom_model.CustomModel):
         shuffle=self._shuffle,
         preprocess=preprocessor,
         drop_remainder=True,
-        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
     )
     if self._hparams.repeat and self._hparams.steps_per_epoch is None:
       raise ValueError(
@@ -100,12 +99,11 @@ class Classifier(custom_model.CustomModel):
         is_training=False,
         preprocess=preprocessor,
         drop_remainder=True,
-        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
     )
     self._model.compile(
         optimizer=self._optimizer,
         loss=self._loss_function,
-        weighted_metrics=self._metric_functions,
+        metrics=self._metric_functions,
     )
 
     latest_checkpoint = (
@@ -131,29 +129,19 @@ class Classifier(custom_model.CustomModel):
         class_weight=self._hparams.class_weights,
     )
 
-  def evaluate(
-      self,
-      data: dataset.Dataset,
-      batch_size: int = 32,
-      **kwargs: Dict[str, Any],
-  ) -> Any:
+  def evaluate(self, data: dataset.Dataset, batch_size: int = 32) -> Any:
     """Evaluates the classifier with the provided evaluation dataset.
 
     Args:
         data: Evaluation dataset
         batch_size: Number of samples per evaluation step.
-        **kwargs: Additional arguments to pass to `model.evaluate`.
 
     Returns:
       The loss value and accuracy.
     """
     ds = data.gen_tf_dataset(
-        batch_size,
-        is_training=False,
-        preprocess=self._preprocess,
-        num_parallel_preprocess_calls=self._hparams.num_parallel_calls,
-    )
-    return self._model.evaluate(ds, **kwargs)
+        batch_size, is_training=False, preprocess=self._preprocess)
+    return self._model.evaluate(ds)
 
   def export_labels(self, export_dir: str, label_filename: str = 'labels.txt'):
     """Exports classification labels into a label file.

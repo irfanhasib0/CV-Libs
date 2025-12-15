@@ -233,7 +233,6 @@ cc_test(
     size = "large",
     timeout = "long",
     srcs = ["scene_cropping_calculator_test.cc"],
-    tags = ["noasan"],  #  TODO b/352507058 - ASAN run takes 25 minutes. Disabled for now.
     deps = [
         ":scene_cropping_calculator",
         "//mediapipe/examples/desktop/autoflip:autoflip_messages_cc_proto",

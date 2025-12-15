@@ -29,7 +29,6 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPTaskOptionsProtocol",
         "//mediapipe/tasks/ios/core/utils:MPPBaseOptionsHelpers",
         "//mediapipe/tasks/ios/vision/hand_landmarker:MPPHandLandmarkerOptions",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 

@@ -16,8 +16,8 @@
 # Placeholder for internal Python strict test compatibility macro.
 
 package(default_visibility = [
-    "//mediapipe/tasks/python:__subpackages__",
-    "//third_party/py/ai_edge_torch/google/model_conversion:__subpackages__",
+    "//mediapipe:__subpackages__",
+    "//third_party/odml:__subpackages__",
 ])
 
 py_library(
@@ -26,16 +26,12 @@ py_library(
     deps = [
         "//mediapipe/tasks/cc/genai/inference/proto:llm_params_py_pb2",
         "//mediapipe/tasks/python/metadata/metadata_writers:model_asset_bundle_utils",
-        "@com_google_sentencepiece//python:sentencepiece_processor",
     ],
 )
 
 py_test(
     name = "llm_bundler_test",
     srcs = ["llm_bundler_test.py"],
-    deps = [
-        ":llm_bundler",
-        "@com_google_sentencepiece//:sentencepiece_model_py_pb2",
-        "@mediapipe_pip_deps_absl_py//:pkg",
-    ],
+    srcs_version = "PY3",
+    deps = [":llm_bundler"],
 )

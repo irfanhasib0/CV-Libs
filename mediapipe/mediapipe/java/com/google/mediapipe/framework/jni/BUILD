@@ -113,7 +113,7 @@ cc_library(
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
         "@com_google_absl//absl/synchronization",
-        "@eigen//:eigen3",
+        "@eigen_archive//:eigen3",
     ] + select({
         "//conditions:default": [
             "//mediapipe/framework/port:file_helpers",

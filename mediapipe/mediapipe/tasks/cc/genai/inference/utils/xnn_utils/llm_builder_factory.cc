@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: b/324316496 - Add unit test.
+// TODO: Add unit test.
 
 #include "mediapipe/tasks/cc/genai/inference/utils/xnn_utils/llm_builder_factory.h"
 
@@ -34,10 +34,9 @@
 
 namespace mediapipe::tasks::genai::xnn_utils {
 
-absl::StatusOr<std::unique_ptr<Llm>> CreateLlm(
+absl::StatusOr<std::unique_ptr<LlmBuilder>> CreateLlmBuilder(
     const LlmParams& llm_params,
     std::unique_ptr<RuntimeConfigs> runtime_configs,
-    std::unique_ptr<LlmWeightsLoader> weight_loader,
     std::unique_ptr<Sampler> sampler,
     odml::infra::proto::LlmModelType model_type) {
   std::unique_ptr<LlmBuilder> builder;
@@ -57,10 +56,6 @@ absl::StatusOr<std::unique_ptr<Llm>> CreateLlm(
     case odml::infra::proto::LLM_MODEL_TYPE_GEMMA_2B:
       ABSL_FALLTHROUGH_INTENDED;
     case odml::infra::proto::LLM_MODEL_TYPE_GEMMA_7B:
-      ABSL_FALLTHROUGH_INTENDED;
-    case odml::infra::proto::LLM_MODEL_TYPE_GEMMA2_2B:
-      ABSL_FALLTHROUGH_INTENDED;
-    case odml::infra::proto::LLM_MODEL_TYPE_GEMMA3_1B:
       builder = std::make_unique<LlmBuilder>(llm_params, std::move(sampler),
                                              std::move(runtime_configs));
       break;
@@ -68,7 +63,7 @@ absl::StatusOr<std::unique_ptr<Llm>> CreateLlm(
       return absl::InvalidArgumentError(
           absl::StrCat("Unsupported model type: ", model_type));
   }
-  return Llm::CreateLlm(std::move(weight_loader), std::move(builder));
+  return builder;
 }
 
 }  // namespace mediapipe::tasks::genai::xnn_utils

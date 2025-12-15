@@ -23,7 +23,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -35,7 +34,6 @@ objc_library(
         ":MPPImageSegmenterResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -45,8 +43,7 @@ objc_library(
     hdrs = ["sources/MPPImageSegmenter.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     module_name = "MPPImageSegmenter",
@@ -65,6 +62,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterOptionsHelpers",
         "//mediapipe/tasks/ios/vision/image_segmenter/utils:MPPImageSegmenterResultHelpers",
         "//mediapipe/util:label_map_cc_proto",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

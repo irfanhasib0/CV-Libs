@@ -2,7 +2,7 @@
 #
 # EXAMPLE:
 #   node {
-#     calculator: "FaceDetection"
+#     calculator: "FaceDetectionFrontCpu"
 #     input_stream: "IMAGE:image"
 #     input_stream: "ROI:roi"
 #     output_stream: "DETECTIONS:face_detections"

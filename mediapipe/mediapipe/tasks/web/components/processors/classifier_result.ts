@@ -15,15 +15,8 @@
  */
 
 import {Classification as ClassificationProto} from '../../../../framework/formats/classification_pb';
-import {
-  ClassificationResult as ClassificationResultProto,
-  Classifications as ClassificationsProto,
-} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
-import {
-  ClassificationResult,
-  Classifications,
-} from '../../../../tasks/web/components/containers/classification_result';
-import {asLegacyNumberOrString} from '../../../../tasks/web/components/utils/numeric_conversion';
+import {ClassificationResult as ClassificationResultProto, Classifications as ClassificationsProto} from '../../../../tasks/cc/components/containers/proto/classifications_pb';
+import {ClassificationResult, Classifications} from '../../../../tasks/web/components/containers/classification_result';
 
 const DEFAULT_INDEX = -1;
 const DEFAULT_SCORE = 0.0;
@@ -32,11 +25,9 @@ const DEFAULT_SCORE = 0.0;
  * Converts a list of Classification protos to a Classifications object.
  */
 export function convertFromClassifications(
-  classifications: readonly ClassificationProto[],
-  headIndex = DEFAULT_INDEX,
-  headName = '',
-): Classifications {
-  const categories = classifications.map((classification) => {
+    classifications: readonly ClassificationProto[], headIndex = DEFAULT_INDEX,
+    headName = ''): Classifications {
+  const categories = classifications.map(classification => {
     return {
       index: classification.getIndex() ?? DEFAULT_INDEX,
       score: classification.getScore() ?? DEFAULT_SCORE,
@@ -54,31 +45,24 @@ export function convertFromClassifications(
 /**
  * Converts a Classifications proto to a Classifications object.
  */
-function convertFromClassificationsProto(
-  source: ClassificationsProto,
-): Classifications {
+function convertFromClassificationsProto(source: ClassificationsProto):
+    Classifications {
   return convertFromClassifications(
-    source.getClassificationList()?.getClassificationList() ?? [],
-    source.getHeadIndex(),
-    source.getHeadName(),
-  );
+      source.getClassificationList()?.getClassificationList() ?? [],
+      source.getHeadIndex(), source.getHeadName());
 }
 
 /**
  * Converts a ClassificationResult proto to a ClassificationResult object.
  */
 export function convertFromClassificationResultProto(
-  source: ClassificationResultProto,
-): ClassificationResult {
+    source: ClassificationResultProto): ClassificationResult {
   const result: ClassificationResult = {
-    classifications: source
-      .getClassificationsList()
-      .map((classififications) =>
-        convertFromClassificationsProto(classififications),
-      ),
+    classifications: source.getClassificationsList().map(
+        classififications => convertFromClassificationsProto(classififications))
   };
   if (source.hasTimestampMs()) {
-    result.timestampMs = asLegacyNumberOrString(source.getTimestampMs());
+    result.timestampMs = source.getTimestampMs();
   }
   return result;
 }

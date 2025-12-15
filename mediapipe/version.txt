@@ -1,2 +1,2 @@
-* (HEAD detached at v0.10.26)
+* (HEAD detached at v0.10.14)
   master

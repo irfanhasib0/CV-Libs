@@ -91,12 +91,6 @@ public class MicrophoneHelper implements AudioDataProducer {
   // sent to the listener of this class.
   private boolean recording = false;
 
-  // If true, the class will drop non-increasing timestamps.
-  private boolean dropNonIncreasingTimestamps;
-  // Keeps track of the timestamp to guarantee that timestamps produced are always monotonically
-  // increasing.
-  private long lastTimestampMicros = UNINITIALIZED_TIMESTAMP;
-
   // The consumers are provided with the data read on every AudioRecord.read() call. If the consumer
   // called stopMicrophone() while a call to AudioRecord.read() was blocked, the class will discard
   // the data read after recording stopped.
@@ -125,11 +119,6 @@ public class MicrophoneHelper implements AudioDataProducer {
             sampleRateInHz, channelConfig, /*audioFormat=*/ AUDIO_ENCODING);
 
     updateBufferSizes(readIntervalMicros);
-  }
-
-  /** Sets whether to drop non-increasing timestamps. */
-  public void setDropNonIncreasingTimestamps(boolean dropNonIncreasingTimestamps) {
-    this.dropNonIncreasingTimestamps = dropNonIncreasingTimestamps;
   }
 
   /**
@@ -183,7 +172,6 @@ public class MicrophoneHelper implements AudioDataProducer {
               android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
 
               startRecordingTimestampNanos = System.nanoTime();
-              lastTimestampMicros = UNINITIALIZED_TIMESTAMP;
               long timestampOffsetNanos = 0;
               // The total number of frames read from multiple calls to AudioRecord.read() in this
               // recording thread.
@@ -215,12 +203,6 @@ public class MicrophoneHelper implements AudioDataProducer {
                   timestampOffsetNanos = timestampNanos - initialTimestampNanos;
                 }
                 long timestampMicros = (timestampNanos - timestampOffsetNanos) / NANOS_PER_MICROS;
-                if (dropNonIncreasingTimestamps && timestampMicros <= lastTimestampMicros) {
-                  Log.i(
-                      TAG, "Dropping mic audio with non-increasing timestamp: " + timestampMicros);
-                  continue;
-                }
-                lastTimestampMicros = timestampMicros;
 
                 // It is expected that audioRecord.read() will read full samples and therefore
                 // number of bytes read is expected to be a multiple of bytesPerFrame.

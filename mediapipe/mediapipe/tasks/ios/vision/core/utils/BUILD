@@ -8,8 +8,7 @@ objc_library(
     hdrs = ["sources/MPPImage+Utils.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     module_name = "MPPImageUtils",
     deps = [
@@ -23,6 +22,5 @@ objc_library(
         "//third_party/apple_frameworks:CoreGraphics",
         "//third_party/apple_frameworks:CoreImage",
         "//third_party/apple_frameworks:CoreVideo",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

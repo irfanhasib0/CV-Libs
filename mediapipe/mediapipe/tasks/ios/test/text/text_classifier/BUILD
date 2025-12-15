@@ -33,7 +33,7 @@ TFL_DISABLED_SANITIZER_TAGS = [
 
 objc_library(
     name = "MPPTextClassifierObjcTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["MPPTextClassifierTests.m"],
     data = [
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
@@ -42,7 +42,6 @@ objc_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 
@@ -58,7 +57,7 @@ ios_unit_test(
 
 swift_library(
     name = "MPPTextClassifierSwiftTestLibrary",
-    testonly = True,
+    testonly = 1,
     srcs = ["TextClassifierTests.swift"],
     data = [
         "//mediapipe/tasks/testdata/text:bert_text_classifier_models",
@@ -68,7 +67,6 @@ swift_library(
     deps = [
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/text/text_classifier:MPPTextClassifier",
-        "//third_party/apple_frameworks:XCTest",
     ],
 )
 

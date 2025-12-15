@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -22,6 +23,7 @@
 #include "absl/status/status.h"
 #include "absl/status/statusor.h"
 #include "absl/strings/str_format.h"
+#include "absl/strings/substitute.h"
 #include "absl/types/optional.h"
 #include "mediapipe/calculators/tensor/tensor_converter_calculator.pb.h"
 #include "mediapipe/calculators/tensor/tensor_converter_cpu.h"
@@ -36,7 +38,6 @@
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status_macros.h"
 #include "mediapipe/gpu/gpu_origin.pb.h"
-#include "mediapipe/gpu/gpu_origin_utils.h"
 
 #if !MEDIAPIPE_DISABLE_GPU
 #include "mediapipe/gpu/gpu_buffer.h"
@@ -60,6 +61,7 @@
 
 namespace {
 
+constexpr int kWorkgroupSize = 8;  // Block size for GPU shader.
 // Commonly used to compute the number of blocks to launch in a kernel.
 int NumGroups(const int size, const int group_size) {  // NOLINT
   return (size + group_size - 1) / group_size;
@@ -85,13 +87,26 @@ absl::StatusOr<bool> ShouldFlipVertically(
     return false;
   }
 
-  return mediapipe::IsGpuOriginAtBottom(options.gpu_origin());
+  switch (options.gpu_origin()) {
+    case mediapipe::GpuOrigin::TOP_LEFT:
+      return false;
+    case mediapipe::GpuOrigin::DEFAULT:
+    case mediapipe::GpuOrigin::CONVENTIONAL:
+      // TOP_LEFT on Metal, BOTTOM_LEFT on OpenGL.
+#ifdef __APPLE__
+      return false;
+#else
+      return true;
+#endif
+    default:
+      return absl::InvalidArgumentError(
+          absl::StrFormat("Unhandled GPU origin %i", options.gpu_origin()));
+  }
 }
 
 constexpr char kImageFrameTag[] = "IMAGE";
 constexpr char kGpuBufferTag[] = "IMAGE_GPU";
 constexpr char kTensorsTag[] = "TENSORS";
-constexpr char kTensorTag[] = "TENSOR";
 constexpr char kMatrixTag[] = "MATRIX";
 
 constexpr std::pair<float, float> kDefaultOutputRange = {0.0f, 1.0f};
@@ -103,7 +118,7 @@ namespace mediapipe {
 // Calculator for normalizing and converting an ImageFrame, GpuBuffer or Matrix
 // into a Tensor.
 //
-// This calculator is designed to be used with the TfLiteInferenceCalculator,
+// This calculator is designed to be used with the TfLiteInferenceCalcualtor,
 // as a pre-processing step for calculator inputs.
 //
 // IMAGE and IMAGE_GPU inputs are normalized to [-1,1] (default) or [0,1],
@@ -121,7 +136,6 @@ namespace mediapipe {
 //          - MTLBuffer if Metal API is available
 //          - SSBO if Metal is unavailable and OpenGL ES 3.1 is available
 //          - Texture2D if Metal and GLES 3.1 are not available and GLES 3.0 is.
-//  TENSOR  - Tensor of type kFloat32. Resource type same as in TENSORS
 //
 // Example use:
 // node {
@@ -149,8 +163,8 @@ class TensorConverterCalculator : public CalculatorBase {
  private:
   absl::Status InitGpu(CalculatorContext* cc);
   absl::Status LoadOptions(CalculatorContext* cc, bool use_gpu);
-  absl::StatusOr<std::optional<Tensor>> ProcessCPU(CalculatorContext* cc);
-  absl::StatusOr<std::optional<Tensor>> ProcessGPU(CalculatorContext* cc);
+  absl::Status ProcessCPU(CalculatorContext* cc);
+  absl::Status ProcessGPU(CalculatorContext* cc);
 
 #if MEDIAPIPE_METAL_ENABLED
   MPPMetalHelper* gpu_helper_ = nullptr;
@@ -197,16 +211,8 @@ absl::Status TensorConverterCalculator::GetContract(CalculatorContract* cc) {
   }
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  RET_CHECK(cc->Outputs().HasTag(kTensorsTag) ^
-            cc->Outputs().HasTag(kTensorTag))
-      << "One and only one of TENSOR or TENSORS should be set";
-  if (cc->Outputs().HasTag(kTensorsTag)) {
-    cc->Outputs().Tag(kTensorsTag).Set<std::vector<Tensor>>();
-  }
-  if (cc->Outputs().HasTag(kTensorTag)) {
-    cc->Outputs().Tag(kTensorTag).Set<Tensor>();
-  }
-
+  RET_CHECK(cc->Outputs().HasTag(kTensorsTag));
+  cc->Outputs().Tag(kTensorsTag).Set<std::vector<Tensor>>();
   return absl::OkStatus();
 }
 
@@ -234,31 +240,15 @@ absl::Status TensorConverterCalculator::Open(CalculatorContext* cc) {
 }
 
 absl::Status TensorConverterCalculator::Process(CalculatorContext* cc) {
-  MP_ASSIGN_OR_RETURN(auto maybe_tensor,
-                      [&]() -> absl::StatusOr<std::optional<Tensor>> {
-                        if (use_gpu_) {
-                          if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
-                            return std::nullopt;
-                          }
-                          // Convert to GPU tensors type.
-                          return ProcessGPU(cc);
-                        } else {
-                          // Convert to CPU tensors or Matrix type.
-                          return ProcessCPU(cc);
-                        }
-                      }());
-
-  if (maybe_tensor) {
-    if (cc->Outputs().HasTag(kTensorsTag)) {
-      auto output = std::make_unique<std::vector<Tensor>>();
-      output->push_back(*std::move(maybe_tensor));
-      cc->Outputs()
-          .Tag(kTensorsTag)
-          .Add(output.release(), cc->InputTimestamp());
-    } else {
-      auto output = std::make_unique<Tensor>(*std::move(maybe_tensor));
-      cc->Outputs().Tag(kTensorTag).Add(output.release(), cc->InputTimestamp());
+  if (use_gpu_) {
+    if (cc->Inputs().Tag(kGpuBufferTag).IsEmpty()) {
+      return absl::OkStatus();
     }
+    // Convert to GPU tensors type.
+    MP_RETURN_IF_ERROR(ProcessGPU(cc));
+  } else {
+    // Convert to CPU tensors or Matrix type.
+    MP_RETURN_IF_ERROR(ProcessCPU(cc));
   }
   return absl::OkStatus();
 }
@@ -276,11 +266,11 @@ absl::Status TensorConverterCalculator::Close(CalculatorContext* cc) {
   return absl::OkStatus();
 }
 
-absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessCPU(
-    CalculatorContext* cc) {
+absl::Status TensorConverterCalculator::ProcessCPU(CalculatorContext* cc) {
+  auto output_tensors = absl::make_unique<std::vector<Tensor>>();
   if (cc->Inputs().HasTag(kImageFrameTag)) {
     if (cc->Inputs().Tag(kImageFrameTag).IsEmpty()) {
-      return std::nullopt;
+      return absl::OkStatus();
     }
     const auto& image_frame =
         cc->Inputs().Tag(kImageFrameTag).Get<ImageFrame>();
@@ -291,23 +281,27 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessCPU(
             output_range_.has_value() ? output_range_.value()
                                       : kDefaultOutputRange,
             flip_vertically_, max_num_channels_, memory_manager_));
-    return std::move(output);
+    output_tensors->push_back(std::move(output));
   } else if (cc->Inputs().HasTag(kMatrixTag)) {
     if (cc->Inputs().Tag(kMatrixTag).IsEmpty()) {
-      return std::nullopt;
+      return absl::OkStatus();
     }
     const auto& matrix = cc->Inputs().Tag(kMatrixTag).Get<Matrix>();
     MP_ASSIGN_OR_RETURN(
         Tensor output,
         ConvertMatrixToTensorOnCpu(matrix, row_major_matrix_, memory_manager_));
-    return std::move(output);
+    output_tensors->push_back(std::move(output));
   } else {
-    return std::nullopt;
+    return absl::OkStatus();
   }
+  cc->Outputs()
+      .Tag(kTensorsTag)
+      .Add(output_tensors.release(), cc->InputTimestamp());
+
+  return absl::OkStatus();
 }
 
-absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessGPU(
-    CalculatorContext* cc) {
+absl::Status TensorConverterCalculator::ProcessGPU(CalculatorContext* cc) {
 #if !MEDIAPIPE_DISABLE_GPU
   if (!initialized_) {
     MP_RETURN_IF_ERROR(InitGpu(cc));
@@ -315,23 +309,26 @@ absl::StatusOr<std::optional<Tensor>> TensorConverterCalculator::ProcessGPU(
   }
   const auto& input =
       cc->Inputs().Tag(kGpuBufferTag).Get<mediapipe::GpuBuffer>();
+  auto output_tensors = std::make_unique<std::vector<Tensor>>();
 #if MEDIAPIPE_METAL_ENABLED
   Tensor output = tensor_converter_gpu_->Convert(input);
-  return std::move(output);
+  output_tensors->push_back(std::move(output));
 #elif MEDIAPIPE_OPENGL_ES_VERSION >= MEDIAPIPE_OPENGL_ES_30
-  std::optional<Tensor> output;
-  MP_RETURN_IF_ERROR(
-      gpu_helper_.RunInGlContext([this, &output, &input]() -> absl::Status {
-        output = tensor_converter_gpu_->Convert(input);
+  MP_RETURN_IF_ERROR(gpu_helper_.RunInGlContext(
+      [this, &output_tensors, &input]() -> absl::Status {
+        Tensor output = tensor_converter_gpu_->Convert(input);
+        output_tensors->push_back(std::move(output));
         return absl::OkStatus();
       }));
-  return std::move(output);
 #endif  // MEDIAPIPE_METAL_ENABLED
+  cc->Outputs()
+      .Tag(kTensorsTag)
+      .Add(output_tensors.release(), cc->InputTimestamp());
 #else
   RET_CHECK_FAIL() << "GPU processing is not enabled.";
 #endif  // !MEDIAPIPE_DISABLE_GPU
 
-  return std::nullopt;
+  return absl::OkStatus();
 }
 
 absl::Status TensorConverterCalculator::InitGpu(CalculatorContext* cc) {

@@ -21,7 +21,4 @@ objc_library(
     srcs = ["sources/MPPFileInfo.m"],
     hdrs = ["sources/MPPFileInfo.h"],
     module_name = "MPPFileInfo",
-    deps = [
-        "//third_party/apple_frameworks:Foundation",
-    ],
 )

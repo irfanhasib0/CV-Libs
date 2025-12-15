@@ -23,8 +23,6 @@ cc_library(
     hdrs = [
         "tokenizer.h",
     ],
-    visibility = default_visibility + [
-    ],
     deps = [
         "@com_google_absl//absl/strings",
     ],
@@ -38,9 +36,7 @@ cc_library(
     hdrs = [
         "bert_tokenizer.h",
     ],
-    visibility = default_visibility + [
-        "//mediapipe/tasks:users",
-    ],
+    visibility = default_visibility + ["//mediapipe/tasks:users"],
     deps = [
         ":tokenizer",
         "//mediapipe/framework/port:integral_types",

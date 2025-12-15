@@ -22,6 +22,7 @@ cc_library(
     hdrs = ["face_stylizer.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//mediapipe/framework/formats:image",
         "//mediapipe/framework/formats:image_frame",
         "//mediapipe/tasks/c/core:base_options",
         "//mediapipe/tasks/c/core:base_options_converter",
@@ -30,6 +31,7 @@ cc_library(
         "//mediapipe/tasks/cc/vision/utils:image_utils",
         "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
     ],
     alwayslink = 1,
 )
@@ -42,9 +44,6 @@ cc_test(
         "//mediapipe/tasks/testdata/vision:test_models",
     ],
     linkstatic = 1,
-    tags = [
-        "noasan",  # TODO: Re-enable once the bug is fixed.
-    ],
     deps = [
         ":face_stylizer_lib",
         "//mediapipe/framework/deps:file_path",

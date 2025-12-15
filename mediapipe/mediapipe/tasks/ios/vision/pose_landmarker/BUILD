@@ -24,7 +24,6 @@ objc_library(
         "//mediapipe/tasks/ios/components/containers:MPPLandmark",
         "//mediapipe/tasks/ios/core:MPPTaskResult",
         "//mediapipe/tasks/ios/vision/core:MPPMask",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -36,7 +35,6 @@ objc_library(
         ":MPPPoseLandmarkerResult",
         "//mediapipe/tasks/ios/core:MPPTaskOptions",
         "//mediapipe/tasks/ios/vision/core:MPPRunningMode",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -44,10 +42,7 @@ objc_library(
     name = "MPPPoseLandmarksConnections",
     hdrs = ["sources/MPPPoseLandmarksConnections.h"],
     module_name = "MPPPoseLandmarksConnections",
-    deps = [
-        "//mediapipe/tasks/ios/components/containers:MPPConnection",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    deps = ["//mediapipe/tasks/ios/components/containers:MPPConnection"],
 )
 
 objc_library(
@@ -56,8 +51,7 @@ objc_library(
     hdrs = ["sources/MPPPoseLandmarker.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
         "-x objective-c++",
     ],
     module_name = "MPPPoseLandmarker",
@@ -75,6 +69,5 @@ objc_library(
         "//mediapipe/tasks/ios/vision/core:MPPVisionTaskRunner",
         "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerOptionsHelpers",
         "//mediapipe/tasks/ios/vision/pose_landmarker/utils:MPPPoseLandmarkerResultHelpers",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

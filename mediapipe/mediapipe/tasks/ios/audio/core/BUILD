@@ -22,8 +22,7 @@ objc_library(
     hdrs = ["sources/MPPAudioData.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPAudioDataFormat",
@@ -32,7 +31,6 @@ objc_library(
         ":MPPFloatRingBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -40,17 +38,13 @@ objc_library(
     name = "MPPAudioDataFormat",
     srcs = ["sources/MPPAudioDataFormat.m"],
     hdrs = ["sources/MPPAudioDataFormat.h"],
-    deps = [
-        "//third_party/apple_frameworks:AVFAudio",
-        "//third_party/apple_frameworks:Foundation",
-    ],
+    deps = ["//third_party/apple_frameworks:AVFAudio"],
 )
 
 objc_library(
     name = "MPPFloatBuffer",
     srcs = ["sources/MPPFloatBuffer.m"],
     hdrs = ["sources/MPPFloatBuffer.h"],
-    deps = ["//third_party/apple_frameworks:Foundation"],
 )
 
 objc_library(
@@ -59,14 +53,12 @@ objc_library(
     hdrs = ["sources/MPPFloatRingBuffer.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPFloatBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -76,8 +68,7 @@ objc_library(
     hdrs = ["sources/MPPAudioRecord.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPAudioDataFormat",
@@ -85,8 +76,6 @@ objc_library(
         ":MPPFloatRingBuffer",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -96,8 +85,7 @@ objc_library(
     hdrs = ["sources/MPPAudioPacketCreator.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPAudioData",
@@ -106,8 +94,6 @@ objc_library(
         "//mediapipe/framework/formats:matrix",
         "//mediapipe/tasks/ios/common:MPPCommon",
         "//mediapipe/tasks/ios/common/utils:MPPCommonUtils",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )
 
@@ -122,13 +108,11 @@ objc_library(
     hdrs = ["sources/MPPAudioTaskRunner.h"],
     copts = [
         "-ObjC++",
-        "-std=c++20",
-        "-Xclang=-fno-cxx-modules",
+        "-std=c++17",
     ],
     deps = [
         ":MPPAudioData",
         ":MPPAudioPacketCreator",
-        ":MPPAudioRecord",
         ":MPPAudioRunningMode",
         "//mediapipe/framework:packet",
         "//mediapipe/tasks/ios/common:MPPCommon",
@@ -137,7 +121,5 @@ objc_library(
         "//mediapipe/tasks/ios/core:MPPPacketCreator",
         "//mediapipe/tasks/ios/core:MPPTaskInfo",
         "//mediapipe/tasks/ios/core:MPPTaskRunner",
-        "//third_party/apple_frameworks:AVFoundation",
-        "//third_party/apple_frameworks:Foundation",
     ],
 )

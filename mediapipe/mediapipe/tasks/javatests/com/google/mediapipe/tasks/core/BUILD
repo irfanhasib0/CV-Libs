@@ -20,7 +20,7 @@ android_library(
     name = "test_utils",
     srcs = ["TestUtils.java"],
     deps = [
-        "@maven//:com_google_guava_guava",
+        "//third_party/java/android_libs/guava_jdk5:io",
     ],
 )
 

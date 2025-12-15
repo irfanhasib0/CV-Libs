@@ -1,4 +1,3 @@
-load("//mediapipe/framework/port:build_config.bzl", "mediapipe_proto_library")
 # Placeholder: load py_test
 
 package(
@@ -21,13 +20,9 @@ cc_library(
         ":port",
         "//mediapipe/framework:calculator_base",
         "//mediapipe/framework:calculator_contract",
-        "//mediapipe/framework:mediapipe_options_cc_proto",
-        "//mediapipe/framework:stream_handler_cc_proto",
-        "//mediapipe/framework/api3:graph",
-        "//mediapipe/framework/api3:side_packet",
-        "//mediapipe/framework/api3:stream",
-        "//mediapipe/framework/api3/internal:graph_builder",
-        "//mediapipe/framework/deps:registration",
+        "//mediapipe/framework/port:any_proto",
+        "//mediapipe/framework/port:ret_check",
+        "@com_google_absl//absl/container:btree",
         "@com_google_absl//absl/log:absl_check",
         "@com_google_absl//absl/strings",
         "@com_google_protobuf//:protobuf",
@@ -47,7 +42,6 @@ cc_test(
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/stream_handler:fixed_size_input_stream_handler_cc_proto",
         "//mediapipe/framework/testdata:night_light_calculator_cc_proto",
         "//mediapipe/framework/testdata:sky_light_calculator_cc_proto",
         "@com_google_absl//absl/strings",
@@ -100,7 +94,7 @@ cc_library(
 
 cc_library(
     name = "test_contracts",
-    testonly = True,
+    testonly = 1,
     hdrs = ["test_contracts.h"],
     deps = [
         ":node",
@@ -111,27 +105,17 @@ cc_test(
     name = "node_test",
     srcs = ["node_test.cc"],
     deps = [
-        ":builder",
-        ":contract",
         ":node",
-        ":node_test_cc_proto",
         ":packet",
         ":port",
         ":test_contracts",
+        ":tuple",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
         "//mediapipe/framework/port:parse_text_proto",
-        "//mediapipe/framework/port:ret_check",
         "//mediapipe/framework/port:status",
         "@com_google_absl//absl/log:absl_log",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/strings",
     ],
-)
-
-mediapipe_proto_library(
-    name = "node_test_proto",
-    srcs = ["node_test.proto"],
 )
 
 cc_library(
@@ -140,19 +124,10 @@ cc_library(
     hdrs = ["packet.h"],
     deps = [
         ":tuple",
-        "//mediapipe/framework:legacy_calculator_support",
         "//mediapipe/framework:packet",
-        "//mediapipe/framework:port",
-        "//mediapipe/framework:timestamp",
         "//mediapipe/framework/port:logging",
-        "//mediapipe/framework/port:status",
-        "@com_google_absl//absl/base:core_headers",
         "@com_google_absl//absl/log:absl_check",
-        "@com_google_absl//absl/log:absl_log",
         "@com_google_absl//absl/meta:type_traits",
-        "@com_google_absl//absl/status",
-        "@com_google_absl//absl/status:statusor",
-        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -164,9 +139,8 @@ cc_test(
     ],
     deps = [
         ":packet",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -194,13 +168,8 @@ cc_test(
         "port_test.cc",
     ],
     deps = [
-        ":builder",
-        ":node",
-        ":packet",
         ":port",
-        "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:gtest_main",
-        "@com_google_absl//absl/status",
         "@com_google_absl//absl/strings",
     ],
 )

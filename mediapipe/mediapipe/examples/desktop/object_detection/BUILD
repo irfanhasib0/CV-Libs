@@ -16,13 +16,6 @@ licenses(["notice"])
 
 package(default_visibility = ["//mediapipe/examples:__subpackages__"])
 
-# BUILD:
-# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
-#   //mediapipe/examples/desktop/object_detection:object_detection_tensorflow
-# RUN:
-# bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tensorflow \
-#   --calculator_graph_config_file=<.../object_detection_desktop_tensorflow_graph.pbtxt> \
-#   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "object_detection_tensorflow",
     data = [
@@ -37,13 +30,6 @@ cc_binary(
     ],
 )
 
-# BUILD:
-# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
-#   //mediapipe/examples/desktop/object_detection:object_detection_tflite
-# RUN:
-# bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_tflite \
-#   --calculator_graph_config_file=<.../object_detection_desktop_tflite_graph.pbtxt> \
-#   --input_side_packets=input_video_path=<input video path>,output_video_path=<output video path>
 cc_binary(
     name = "object_detection_tflite",
     data = [
@@ -56,14 +42,6 @@ cc_binary(
     ],
 )
 
-# BUILD:
-# bazel build -c opt --define MEDIAPIPE_DISABLE_GPU=1 \
-#   //mediapipe/examples/desktop/object_detection:object_detection_cpu
-# RUN:
-# bazel-bin/mediapipe/examples/desktop/object_detection/object_detection_cpu \
-#   --calculator_graph_config_file=<.../object_detection_desktop_live.pbtxt> \
-#   --input_video_path=<input video path> \
-#   --output_video_path=<output video path>
 cc_binary(
     name = "object_detection_cpu",
     data = [
