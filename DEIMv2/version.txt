@@ -1,0 +1,5 @@
+commit f203a286b3b59782df036b028d0c89d6a33e2dca
+Author: QiruiWang0728 <1419663087@qq.com>
+Date:   Sat Dec 13 14:20:55 2025 +0800
+
+    delete DEIMv2_Pose
